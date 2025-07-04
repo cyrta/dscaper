@@ -2395,7 +2395,7 @@ def test_clipping_and_normalization():
             # Make sure a second warning is raised if we're fixing the clipping
             audio_path2 = tempfile.NamedTemporaryFile(suffix='.wav', delete=True)
             tmpfiles.append(audio_path2)
-            with pytest.warns(None) as record:
+            with pytest.warns() as record:
                 sc.generate(audio_path2, fix_clipping=True)
 
             assert len(record) == 2
@@ -2405,7 +2405,7 @@ def test_clipping_and_normalization():
             # Make sure we get a third warning when the scaling factor is < 0.05
             audio_path3 = tempfile.NamedTemporaryFile(suffix='.wav', delete=True)
             tmpfiles.append(audio_path3)
-            with pytest.warns(None) as record:
+            with pytest.warns() as record:
                 sc_extreme.generate(audio_path3, fix_clipping=True)
 
             assert len(record) == 3
@@ -2423,7 +2423,7 @@ def test_clipping_and_normalization():
             # Make sure a second warning is NOT raised if we're peak normalizing by default
             audio_path5 = tempfile.NamedTemporaryFile(suffix='.wav', delete=True)
             tmpfiles.append(audio_path5)
-            with pytest.warns(None) as record:
+            with pytest.warns() as record:
                 sc.generate(audio_path5, fix_clipping=False, peak_normalization=True)
 
             assert len(record) == 1
@@ -2433,7 +2433,7 @@ def test_clipping_and_normalization():
             # clipping explicitly and the scaling factor is < 0.05
             audio_path6 = tempfile.NamedTemporaryFile(suffix='.wav', delete=True)
             tmpfiles.append(audio_path6)
-            with pytest.warns(None) as record:
+            with pytest.warns() as record:
                 sc_extreme.generate(audio_path6, fix_clipping=False, peak_normalization=True)
 
             assert len(record) == 2
