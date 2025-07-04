@@ -10,3 +10,4 @@ docs/_build/*
 scaper/bin/*
 .pytest_cache/*
 **/.DS_Store
+.venv/*

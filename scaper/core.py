@@ -1486,7 +1486,7 @@ class Scaper(object):
             # For background events the duration is fixed to self.duration
             # (which must be > 0), but for foreground events it could
             # potentially be non-positive, hence the loop.
-            event_duration = -np.Inf
+            event_duration = -np.inf
             while event_duration <= 0:
                 event_duration = _get_value_from_dist(
                     event.event_duration, self.random_state
@@ -1509,7 +1509,7 @@ class Scaper(object):
             time_stretch = None
             event_duration_stretched = event_duration
         else:
-            time_stretch = -np.Inf
+            time_stretch = -np.inf
             while time_stretch <= 0:
                 time_stretch = _get_value_from_dist(
                     event.time_stretch, self.random_state
@@ -1559,7 +1559,7 @@ class Scaper(object):
             
             # determine source time and also check again just in case (for normal dist).
             # if it happens again, just use the old method.
-            source_time = -np.Inf
+            source_time = -np.inf
             while source_time < 0:
                 source_time = _get_value_from_dist(
                     modified_source_time, self.random_state)
@@ -1595,7 +1595,7 @@ class Scaper(object):
         # determine event time
         # for background events the event time is fixed to 0, but for
         # foreground events it's not.
-        event_time = -np.Inf
+        event_time = -np.inf
         while event_time < 0:
             event_time = _get_value_from_dist(
                 event.event_time, self.random_state

@@ -475,12 +475,11 @@ def is_real_number(num):
 
     '''
 
-    if (not np.isreal(num) or
-            not np.isrealobj(num) or
-            not np.isscalar(num)):
+    if not np.isscalar(num):
         return False
-    else:
-        return True
+    if not np.isreal(num) or not np.isrealobj(num):
+        return False
+    return True
 
 
 def is_real_array(array):
