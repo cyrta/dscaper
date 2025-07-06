@@ -1161,6 +1161,20 @@ def test_validate_time_stretch():
         ScaperWarning, scaper.core._validate_time_stretch, ('normal', 5, 1))
 
 
+def test_validate_event_type():
+    # event_type must not contain spaces
+    pytest.raises(ScaperError, scaper.core._validate_event_type,"with space")
+    # event_type must be a string or None
+    pytest.raises(ScaperError, scaper.core._validate_event_type, 5)
+    pytest.raises(ScaperError, scaper.core._validate_event_type, ['list'])
+    # event_type must not be an empty string
+    pytest.raises(ScaperError, scaper.core._validate_event_type, "")
+    # even_type can be None
+    scaper.core._validate_event_type(None)
+    # event_type can be a string
+    scaper.core._validate_event_type("valid_event-type")
+
+
 def test_validate_event():
 
     bad_allowed_labels = [0, 'yes', 1j, np.array([1, 2, 3])]
