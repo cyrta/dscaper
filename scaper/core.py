@@ -2,6 +2,7 @@ try:
     import soxbindings as sox 
 except: # pragma: no cover
     import sox # pragma: no cover
+import re
 import soundfile
 import os
 import warnings
@@ -61,7 +62,7 @@ SUPPORTED_DIST = {"const": _sample_const,
 EventSpec = namedtuple(
     'EventSpec',
     ['label', 'source_file', 'source_time', 'event_time', 'event_duration',
-     'snr', 'role', 'pitch_shift', 'time_stretch'])
+     'snr', 'role', 'pitch_shift', 'time_stretch','event_type'])
 '''
 Container for storing event specifications, either probabilistic (i.e. using
 distribution tuples to specify possible values) or instantiated (i.e. storing
@@ -928,9 +929,37 @@ def _validate_time_stretch(time_stretch_tuple):
         # values?
 
 
+def _validate_event_type(event_type):
+    '''
+    Validate that the event_type is a non empty string without whitespace and special
+    characters.
+
+    Parameters
+    ----------
+    event_type : str or None
+        Event type to be validated.
+
+    Raises
+    ------
+    ScaperError
+        If the validation fails.
+
+    '''
+    if event_type is not None:
+        if not isinstance(event_type, str):
+            raise ScaperError('Event type must be a string.')
+        if len(event_type) == 0:
+            raise ScaperError('Event type cannot be an empty string.')
+        if not re.match(r'^[\w-]+$', event_type):
+            raise ScaperError(
+                'Event type can only contain alphanumeric characters, '
+                'underscores and hyphens. No whitespace or special '
+                'characters are allowed.')
+
+
 def _validate_event(label, source_file, source_time, event_time,
                     event_duration, snr, allowed_labels, pitch_shift,
-                    time_stretch):
+                    time_stretch, event_type):
     '''
     Check that event parameter values are valid.
 
@@ -946,6 +975,7 @@ def _validate_event(label, source_file, source_time, event_time,
         List of allowed labels for the event.
     pitch_shift : tuple or None
     time_stretch: tuple or None
+    event_type: str or None
 
     Raises
     ------
@@ -985,6 +1015,9 @@ def _validate_event(label, source_file, source_time, event_time,
 
     # Time stretch
     _validate_time_stretch(time_stretch)
+
+    # Event type
+    _validate_event_type(event_type)
 
 
 class Scaper(object):
@@ -1211,7 +1244,7 @@ class Scaper(object):
 
         # Validate parameter format and values
         _validate_event(label, source_file, source_time, event_time,
-                        event_duration, snr, self.bg_labels, None, None)
+                        event_duration, snr, self.bg_labels, None, None, None)
 
         # Create background sound event
         bg_event = EventSpec(label=label,
@@ -1222,13 +1255,14 @@ class Scaper(object):
                              snr=snr,
                              role=role,
                              pitch_shift=pitch_shift,
-                             time_stretch=time_stretch)
+                             time_stretch=time_stretch,
+                             event_type=None)
 
         # Add event to background spec
         self.bg_spec.append(bg_event)
 
     def add_event(self, label, source_file, source_time, event_time,
-                  event_duration, snr, pitch_shift, time_stretch):
+                  event_duration, snr, pitch_shift, time_stretch, event_type=None):
         '''
         Add a foreground sound event to the foreground specification.
 
@@ -1282,6 +1316,9 @@ class Scaper(object):
         time_stretch: tuple
             Specifies the time stretch factor (value>1 will make it slower and
             longer, value<1 will makes it faster and shorter).
+        event_type : str or None
+            Specifies the type of the event. This is a string that can be used
+            to categorize the events
 
         Notes
         -----
@@ -1332,7 +1369,7 @@ class Scaper(object):
         # SAFETY CHECKS
         _validate_event(label, source_file, source_time, event_time,
                         event_duration, snr, self.fg_labels, pitch_shift,
-                        time_stretch)
+                        time_stretch, event_type)
 
         # Create event
         event = EventSpec(label=label,
@@ -1343,7 +1380,8 @@ class Scaper(object):
                           snr=snr,
                           role='foreground',
                           pitch_shift=pitch_shift,
-                          time_stretch=time_stretch)
+                          time_stretch=time_stretch,
+                          event_type=event_type)
 
         # Add event to foreground specification
         self.fg_spec.append(event)
@@ -1652,7 +1690,8 @@ class Scaper(object):
                                        snr=snr,
                                        role=role,
                                        pitch_shift=pitch_shift,
-                                       time_stretch=time_stretch)
+                                       time_stretch=time_stretch,
+                                       event_type=event.event_type)
         # Return
         return instantiated_event
 
@@ -2183,7 +2222,9 @@ class Scaper(object):
                  no_audio=False,
                  txt_path=None,
                  txt_sep='\t',
-                 disable_instantiation_warnings=False):
+                 disable_instantiation_warnings=False,
+                 save_isolated_eventtypes=False,
+                 isolated_eventtypes_path=None):
         """
         Generate a soundscape based on the current specification and return as
         an audio file, a JAMS annotation, a simplified annotation list, and a
@@ -2272,6 +2313,16 @@ class Scaper(object):
             When True (default is False), warnings stemming from event
             instantiation (primarily about automatic duration adjustments) are
             disabled. Not recommended other than for testing purposes.
+        save_isolated_eventtypes : bool
+            If True, this will group events by their type (i.e. speakerA,
+            speakerB, etc.) and save them together in one file per type in the 
+            directory defined by `isolated_eventtypes_path`. Events without a
+            type will be saved in a file called `no_type`. The audio of the
+            isolated events sum up to the mixture of all events if reverb is not
+            applied.
+        isolated_eventtypes_path : str
+            Path to folder for saving isolated events grouped by type. If None,
+            defaults to `<audio_path parent folder>/<audio_path name>_eventtypes`.
 
         Returns
         -------
