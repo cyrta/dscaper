@@ -2,6 +2,7 @@ try:
     import soxbindings as sox 
 except: # pragma: no cover
     import sox # pragma: no cover
+import json
 import re
 import soundfile
 import os
@@ -1857,7 +1858,9 @@ class Scaper(object):
                         quick_pitch_time=False,
                         save_isolated_events=False,
                         isolated_events_path=None,
-                        disable_sox_warnings=True):
+                        disable_sox_warnings=True,
+                        save_isolated_eventtypes=False,
+                        isolated_eventtypes_path=None):
         '''
         Generate audio based on a scaper annotation and save to disk.
 
@@ -1908,6 +1911,10 @@ class Scaper(object):
         disable_sox_warnings : bool
             When True (default), warnings from the pysox module are suppressed
             unless their level is ``'CRITICAL'``.
+        save_isolated_eventtypes : bool
+            See description at generate.
+        isolated_eventtypes_path : str
+            See description at generate.
 
         Returns
         -------
@@ -1939,6 +1946,7 @@ class Scaper(object):
         Scaper.generate
 
         '''
+        # Check that the annotation is of the scaper namespace
         if ann.namespace != 'scaper':
             raise ScaperError(
                 'Annotation namespace must be scaper, found: {:s}'.format(
@@ -2194,6 +2202,41 @@ class Scaper(object):
                             "source files. In this case the sum of the "
                             "audio of the isolated events will not add up to the "
                             "mixture", ScaperWarning)
+                        
+                # Optionally save isolated eventtypes to disk
+                if save_isolated_eventtypes:
+                    base, ext = os.path.splitext(audio_path)
+                    if isolated_eventtypes_path is None:
+                        eventtypes_folder = '{:s}_eventtypes'.format(base)
+                    else:
+                        eventtypes_folder = isolated_eventtypes_path
+                    os.makedirs(eventtypes_folder, exist_ok=True)
+
+                    # Create a dict to store the audio for each event type
+                    eventtype_audio = {}
+                    for e in ann.data:
+                        event_type = e.value['event_type']
+                        if event_type is None:
+                            event_type = "no_type"
+                        if event_type not in eventtype_audio:
+                            eventtype_audio[event_type] = []
+                        eventtype_audio[event_type].append(e)
+                    
+                    # Generate audio for each event type and save to disk
+                    for etype, etype_events in eventtype_audio.items():
+                        eventtype_file = os.path.join(eventtypes_folder, etype + ext)
+                        ann.data = etype_events
+                        self._generate_audio(
+                            eventtype_file,
+                            ann,
+                            reverb=reverb,
+                            fix_clipping=fix_clipping,
+                            peak_normalization=peak_normalization,
+                            quick_pitch_time= quick_pitch_time,
+                            save_isolated_events=False,
+                            disable_sox_warnings=disable_sox_warnings,
+                            save_isolated_eventtypes=False)
+               
 
         # Document output paths
         # TODO: this is redundant with audio_path and isolated_events_path that
@@ -2384,7 +2427,9 @@ class Scaper(object):
                                      disable_sox_warnings=disable_sox_warnings,
                                      fix_clipping=fix_clipping,
                                      peak_normalization=peak_normalization,
-                                     quick_pitch_time=quick_pitch_time)
+                                     quick_pitch_time=quick_pitch_time,
+                                     save_isolated_eventtypes=save_isolated_eventtypes,
+                                     isolated_eventtypes_path=isolated_eventtypes_path)
 
         # TODO: Stick to heavy handed overwriting for now, in the future we
         #  should consolidate this with what happens inside _instantiate().
@@ -2398,6 +2443,8 @@ class Scaper(object):
         ann.sandbox.scaper.quick_pitch_time = quick_pitch_time
         ann.sandbox.scaper.save_isolated_events = save_isolated_events
         ann.sandbox.scaper.isolated_events_path = isolated_events_path
+        ann.sandbox.scaper.save_isolated_eventtypes = save_isolated_eventtypes
+        ann.sandbox.scaper.isolated_eventtypes_path = isolated_eventtypes_path
         ann.sandbox.scaper.disable_sox_warnings = disable_sox_warnings
         ann.sandbox.scaper.no_audio = no_audio
         ann.sandbox.scaper.txt_path = txt_path
