@@ -2125,7 +2125,7 @@ def _test_generate(SR, REG_WAV_PATH, REG_JAM_PATH, REG_TXT_PATH, atol=1e-4, rtol
         jam = jams.load(jam_file.name)
         regjam = jams.load(REG_JAM_PATH)
 
-        sandbox_exclude = ['audio_path', 'jams_path', 'txt_path']
+        sandbox_exclude = ['audio_path', 'jams_path', 'txt_path','isolated_eventtypes_path','save_isolated_eventtypes']
         _compare_scaper_jams(
             jam, regjam,
             exclude_additional_scaper_sandbox_keys=sandbox_exclude)
@@ -2190,7 +2190,7 @@ def _test_generate_return_api(SR, REG_WAV_PATH, REG_JAM_PATH, REG_TXT_PATH,
 
             sandbox_exclude = [
                 'isolated_events_path', 'save_isolated_events', 'jams_path',
-                'txt_path', 'audio_path']
+                'txt_path', 'audio_path','isolated_eventtypes_path','save_isolated_eventtypes']
             _compare_scaper_jams(soundscape_jam, jam)
             _compare_scaper_jams(
                 soundscape_jam,
