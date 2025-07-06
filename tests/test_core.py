@@ -127,6 +127,11 @@ def _compare_scaper_jams(jam, regjam, exclude_additional_scaper_sandbox_keys=[])
     fg_spec_list = [[list(x) if isinstance(x, tuple) else x for x in e] for e in
                     ann.sandbox.scaper['fg_spec']]
     
+    # print("bg_spec_list", bg_spec_list)
+    # print("regann.sandbox.scaper['bg_spec']", regann.sandbox.scaper['bg_spec'])
+    # print("fg_spec_list", fg_spec_list)
+    # print("regann.sandbox.scaper['fg_spec']", regann.sandbox.scaper['fg_spec'])
+    
     assert (fg_spec_list == regann.sandbox.scaper['fg_spec'])
     assert (bg_spec_list == regann.sandbox.scaper['bg_spec'])
 
@@ -232,6 +237,8 @@ def test_generate_from_jams(atol=1e-5, rtol=1e-8):
         assert np.allclose(orig_wav, fj_soundscape_audio)
 
         regjam = jams.load(TEST_PATHS[44100]['REG'].jams)
+        # print(f"Comparing {TEST_PATHS[44100]['REG']}.jams with instantiated jam")
+
         sandbox_exclude = ['fix_clipping', 'peak_normalization', 'quick_pitch_time']
         _compare_scaper_jams(
             regjam, fj_soundscape_jam,
@@ -1168,7 +1175,8 @@ def test_validate_event():
                       snr=('const', 0),
                       allowed_labels=bal,
                       pitch_shift=None,
-                      time_stretch=None)
+                      time_stretch=None,
+                      event_type=None)
 
 
 def test_scaper_init():
@@ -1288,7 +1296,8 @@ def test_scaper_add_background():
                                   snr=("const", 0),
                                   role='background',
                                   pitch_shift=None,
-                                  time_stretch=None)
+                                  time_stretch=None,
+                                  event_type=None)
     assert sc.bg_spec == [bg_event_expected]
 
 
@@ -1318,7 +1327,8 @@ def test_scaper_add_event():
                                   snr=('uniform', 10, 20),
                                   role='foreground',
                                   pitch_shift=('normal', 0, 1),
-                                  time_stretch=('uniform', 0.8, 1.2))
+                                  time_stretch=('uniform', 0.8, 1.2),
+                                  event_type=None)
     assert sc.fg_spec[0] == fg_event_expected
 
 
@@ -1333,7 +1343,8 @@ def test_scaper_instantiate_event():
                          snr=('uniform', 10, 20),
                          role='foreground',
                          pitch_shift=('normal', 0, 1),
-                         time_stretch=('uniform', 0.8, 1.2))
+                         time_stretch=('uniform', 0.8, 1.2),
+                         event_type=None)
 
     # test valid case
     sc = scaper.Scaper(10.0, fg_path=FG_PATH, bg_path=BG_PATH)
@@ -1589,6 +1600,7 @@ def test_scaper_instantiate():
 
         # Load regression jam
         regjam = jams.load(REG_JAM_PATH)
+        # print(f"Comparing {REG_JAM_PATH} with instantiated jam")
         _compare_scaper_jams(jam, regjam,
                              exclude_additional_scaper_sandbox_keys=sandbox_exclude)
 

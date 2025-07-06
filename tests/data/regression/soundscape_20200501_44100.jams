@@ -28,7 +28,8 @@
             "snr": 0,
             "role": "background",
             "pitch_shift": null,
-            "time_stretch": null
+            "time_stretch": null,
+            "event_type": null
           },
           "confidence": 1.0
         },
@@ -44,7 +45,8 @@
             "snr": 5,
             "role": "foreground",
             "pitch_shift": null,
-            "time_stretch": null
+            "time_stretch": null,
+            "event_type": null
           },
           "confidence": 1.0
         },
@@ -60,7 +62,8 @@
             "snr": 20,
             "role": "foreground",
             "pitch_shift": 1,
-            "time_stretch": null
+            "time_stretch": null,
+            "event_type": null
           },
           "confidence": 1.0
         },
@@ -76,7 +79,8 @@
             "snr": 10,
             "role": "foreground",
             "pitch_shift": null,
-            "time_stretch": 1.2
+            "time_stretch": 1.2,
+            "event_type": null
           },
           "confidence": 1.0
         }
@@ -115,6 +119,7 @@
               ],
               "foreground",
               null,
+              null,
               null
             ],
             [
@@ -147,6 +152,7 @@
                 "const",
                 1
               ],
+              null,
               null
             ],
             [
@@ -179,7 +185,8 @@
               [
                 "const",
                 1.2
-              ]
+              ],
+              null
             ]
           ],
           "bg_spec": [
@@ -209,6 +216,7 @@
                 0
               ],
               "background",
+              null,
               null,
               null
             ]
