@@ -2041,6 +2041,80 @@ def test_generate_isolated_events():
             _test_generate_isolated_events(sr, isolated_events_path)
 
 
+def test_generate_isolated_eventtypes():
+    # test generating isolated events with different event types
+    path_to_audio = os.path.join('tests','data','audio')
+
+    soundscape_duration = 10.0
+    foreground_folder = os.path.join(path_to_audio, 'foreground')
+    background_folder = os.path.join(path_to_audio, 'background')
+    sc = scaper.Scaper(soundscape_duration, foreground_folder, background_folder)
+    sc.ref_db = -20
+    sc.sr = 44100
+
+    sc.add_background(label=('const', 'park'),
+                  source_file=('const',
+                    'tests/data/audio/background/park/'
+                    '268903__yonts__city-park-tel-aviv-israel.wav'),
+                  source_time=('const', 0))
+    sc.add_event(label=('const', 'siren'),
+                source_file=('choose', []),
+                source_time=('const', 0),
+                event_time=('uniform', 0, 9),
+                event_duration=('truncnorm', 3, 1, 0.5, 5),
+                snr=('normal', 10, 3),
+                pitch_shift=('uniform', -2, 2),
+                time_stretch=('uniform', 0.8, 1.2))
+    for _ in range(2):
+        sc.add_event(label=('choose', ['car_horn', 'siren']),
+                    source_file=('choose', []),
+                    source_time=('const', 0),
+                    event_time=('uniform', 0, 9),
+                    event_duration=('truncnorm', 3, 1, 0.5, 5),
+                    snr=('normal', 10, 3),
+                    pitch_shift=None,
+                    time_stretch=None,
+                    event_type="type_a")
+    for _ in range(2):
+        sc.add_event(label=('const', 'human_voice'),
+                    source_file=('choose', []),
+                    source_time=('const', 0),
+                    event_time=('uniform', 0, 9),
+                    event_duration=('truncnorm', 3, 1, 0.5, 5),
+                    snr=('normal', 10, 3),
+                    pitch_shift=None,
+                    time_stretch=None,
+                    event_type='type_b')
+    
+    tmpfiles = []
+    with _close_temp_files(tmpfiles):
+        temp_wav_file = tempfile.NamedTemporaryFile(suffix='.wav', delete=True)
+        temp_jam_file = tempfile.NamedTemporaryFile(suffix='.jams', delete=True)
+        temp_txt_file = tempfile.NamedTemporaryFile(suffix='.txt', delete=True)
+        tmpfiles.append(temp_wav_file)
+        tmpfiles.append(temp_jam_file)
+        tmpfiles.append(temp_txt_file)
+        
+        isolated_events_path = 'tests/mix_eventtypes'
+        sc.generate(temp_wav_file.name, temp_jam_file.name,
+                allow_repeated_label=True,
+                allow_repeated_source=True,
+                reverb=0,
+                disable_sox_warnings=True,
+                no_audio=False,
+                txt_path=temp_txt_file.name,
+                save_isolated_eventtypes=True,
+                isolated_eventtypes_path=isolated_events_path)
+        # make sure the isolated events are saved
+        assert os.path.exists(isolated_events_path)
+        assert os.path.exists(os.path.join(isolated_events_path, 'type_a.wav'))
+        assert os.path.exists(os.path.join(isolated_events_path, 'type_b.wav'))
+        assert os.path.exists(os.path.join(isolated_events_path, 'no_type.wav'))
+
+    # clean up the isolated events folder
+    shutil.rmtree(isolated_events_path)
+
+
 def test_generate():
     for sr in SAMPLE_RATES:
         REG_WAV_PATH, REG_JAM_PATH, REG_TXT_PATH = TEST_PATHS[sr]['REG']

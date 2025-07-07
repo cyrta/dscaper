@@ -2215,9 +2215,8 @@ class Scaper(object):
                 # Optionally save isolated eventtypes to disk
                 if save_isolated_eventtypes:
                     base, ext = os.path.splitext(audio_path)
-                    if isolated_eventtypes_path is None:
-                        eventtypes_folder = '{:s}_eventtypes'.format(base)
-                    else:
+                    eventtypes_folder = '{:s}_eventtypes'.format(base)
+                    if not isolated_eventtypes_path is None:
                         eventtypes_folder = isolated_eventtypes_path
                     os.makedirs(eventtypes_folder, exist_ok=True)
 
