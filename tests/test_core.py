@@ -127,6 +127,11 @@ def _compare_scaper_jams(jam, regjam, exclude_additional_scaper_sandbox_keys=[])
     fg_spec_list = [[list(x) if isinstance(x, tuple) else x for x in e] for e in
                     ann.sandbox.scaper['fg_spec']]
     
+    # print("bg_spec_list", bg_spec_list)
+    # print("regann.sandbox.scaper['bg_spec']", regann.sandbox.scaper['bg_spec'])
+    # print("fg_spec_list", fg_spec_list)
+    # print("regann.sandbox.scaper['fg_spec']", regann.sandbox.scaper['fg_spec'])
+    
     assert (fg_spec_list == regann.sandbox.scaper['fg_spec'])
     assert (bg_spec_list == regann.sandbox.scaper['bg_spec'])
 
@@ -232,6 +237,8 @@ def test_generate_from_jams(atol=1e-5, rtol=1e-8):
         assert np.allclose(orig_wav, fj_soundscape_audio)
 
         regjam = jams.load(TEST_PATHS[44100]['REG'].jams)
+        # print(f"Comparing {TEST_PATHS[44100]['REG']}.jams with instantiated jam")
+
         sandbox_exclude = ['fix_clipping', 'peak_normalization', 'quick_pitch_time']
         _compare_scaper_jams(
             regjam, fj_soundscape_jam,
@@ -1154,6 +1161,20 @@ def test_validate_time_stretch():
         ScaperWarning, scaper.core._validate_time_stretch, ('normal', 5, 1))
 
 
+def test_validate_event_type():
+    # event_type must not contain spaces
+    pytest.raises(ScaperError, scaper.core._validate_event_type,"with space")
+    # event_type must be a string or None
+    pytest.raises(ScaperError, scaper.core._validate_event_type, 5)
+    pytest.raises(ScaperError, scaper.core._validate_event_type, ['list'])
+    # event_type must not be an empty string
+    pytest.raises(ScaperError, scaper.core._validate_event_type, "")
+    # even_type can be None
+    scaper.core._validate_event_type(None)
+    # event_type can be a string
+    scaper.core._validate_event_type("valid_event-type")
+
+
 def test_validate_event():
 
     bad_allowed_labels = [0, 'yes', 1j, np.array([1, 2, 3])]
@@ -1168,7 +1189,8 @@ def test_validate_event():
                       snr=('const', 0),
                       allowed_labels=bal,
                       pitch_shift=None,
-                      time_stretch=None)
+                      time_stretch=None,
+                      event_type=None)
 
 
 def test_scaper_init():
@@ -1288,7 +1310,8 @@ def test_scaper_add_background():
                                   snr=("const", 0),
                                   role='background',
                                   pitch_shift=None,
-                                  time_stretch=None)
+                                  time_stretch=None,
+                                  event_type=None)
     assert sc.bg_spec == [bg_event_expected]
 
 
@@ -1318,7 +1341,8 @@ def test_scaper_add_event():
                                   snr=('uniform', 10, 20),
                                   role='foreground',
                                   pitch_shift=('normal', 0, 1),
-                                  time_stretch=('uniform', 0.8, 1.2))
+                                  time_stretch=('uniform', 0.8, 1.2),
+                                  event_type=None)
     assert sc.fg_spec[0] == fg_event_expected
 
 
@@ -1333,7 +1357,8 @@ def test_scaper_instantiate_event():
                          snr=('uniform', 10, 20),
                          role='foreground',
                          pitch_shift=('normal', 0, 1),
-                         time_stretch=('uniform', 0.8, 1.2))
+                         time_stretch=('uniform', 0.8, 1.2),
+                         event_type=None)
 
     # test valid case
     sc = scaper.Scaper(10.0, fg_path=FG_PATH, bg_path=BG_PATH)
@@ -1589,6 +1614,9 @@ def test_scaper_instantiate():
 
         # Load regression jam
         regjam = jams.load(REG_JAM_PATH)
+        # print(f"Comparing {REG_JAM_PATH} with instantiated jam")
+        # print(f"Scaper jam: {jam}")
+        # print(f"Regression jam: {regjam}")
         _compare_scaper_jams(jam, regjam,
                              exclude_additional_scaper_sandbox_keys=sandbox_exclude)
 
@@ -2011,6 +2039,80 @@ def test_generate_isolated_events():
         # try it a bunch of times
         for i in range(10):
             _test_generate_isolated_events(sr, isolated_events_path)
+
+
+def test_generate_isolated_eventtypes():
+    # test generating isolated events with different event types
+    path_to_audio = os.path.join('tests','data','audio')
+
+    soundscape_duration = 10.0
+    foreground_folder = os.path.join(path_to_audio, 'foreground')
+    background_folder = os.path.join(path_to_audio, 'background')
+    sc = scaper.Scaper(soundscape_duration, foreground_folder, background_folder)
+    sc.ref_db = -20
+    sc.sr = 44100
+
+    sc.add_background(label=('const', 'park'),
+                  source_file=('const',
+                    'tests/data/audio/background/park/'
+                    '268903__yonts__city-park-tel-aviv-israel.wav'),
+                  source_time=('const', 0))
+    sc.add_event(label=('const', 'siren'),
+                source_file=('choose', []),
+                source_time=('const', 0),
+                event_time=('uniform', 0, 9),
+                event_duration=('truncnorm', 3, 1, 0.5, 5),
+                snr=('normal', 10, 3),
+                pitch_shift=('uniform', -2, 2),
+                time_stretch=('uniform', 0.8, 1.2))
+    for _ in range(2):
+        sc.add_event(label=('choose', ['car_horn', 'siren']),
+                    source_file=('choose', []),
+                    source_time=('const', 0),
+                    event_time=('uniform', 0, 9),
+                    event_duration=('truncnorm', 3, 1, 0.5, 5),
+                    snr=('normal', 10, 3),
+                    pitch_shift=None,
+                    time_stretch=None,
+                    event_type="type_a")
+    for _ in range(2):
+        sc.add_event(label=('const', 'human_voice'),
+                    source_file=('choose', []),
+                    source_time=('const', 0),
+                    event_time=('uniform', 0, 9),
+                    event_duration=('truncnorm', 3, 1, 0.5, 5),
+                    snr=('normal', 10, 3),
+                    pitch_shift=None,
+                    time_stretch=None,
+                    event_type='type_b')
+    
+    tmpfiles = []
+    with _close_temp_files(tmpfiles):
+        temp_wav_file = tempfile.NamedTemporaryFile(suffix='.wav', delete=True)
+        temp_jam_file = tempfile.NamedTemporaryFile(suffix='.jams', delete=True)
+        temp_txt_file = tempfile.NamedTemporaryFile(suffix='.txt', delete=True)
+        tmpfiles.append(temp_wav_file)
+        tmpfiles.append(temp_jam_file)
+        tmpfiles.append(temp_txt_file)
+        
+        isolated_events_path = 'tests/mix_eventtypes'
+        sc.generate(temp_wav_file.name, temp_jam_file.name,
+                allow_repeated_label=True,
+                allow_repeated_source=True,
+                reverb=0,
+                disable_sox_warnings=True,
+                no_audio=False,
+                txt_path=temp_txt_file.name,
+                save_isolated_eventtypes=True,
+                isolated_eventtypes_path=isolated_events_path)
+        # make sure the isolated events are saved
+        assert os.path.exists(isolated_events_path)
+        assert os.path.exists(os.path.join(isolated_events_path, 'type_a.wav'))
+        assert os.path.exists(os.path.join(isolated_events_path, 'type_b.wav'))
+        assert os.path.exists(os.path.join(isolated_events_path, 'no_type.wav'))
+
+    # clean up the isolated events folder
+    shutil.rmtree(isolated_events_path)
 
 
 def test_generate():

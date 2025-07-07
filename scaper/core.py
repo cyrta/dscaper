@@ -2,6 +2,8 @@ try:
     import soxbindings as sox 
 except: # pragma: no cover
     import sox # pragma: no cover
+import json
+import re
 import soundfile
 import os
 import warnings
@@ -61,7 +63,7 @@ SUPPORTED_DIST = {"const": _sample_const,
 EventSpec = namedtuple(
     'EventSpec',
     ['label', 'source_file', 'source_time', 'event_time', 'event_duration',
-     'snr', 'role', 'pitch_shift', 'time_stretch'])
+     'snr', 'role', 'pitch_shift', 'time_stretch','event_type'])
 '''
 Container for storing event specifications, either probabilistic (i.e. using
 distribution tuples to specify possible values) or instantiated (i.e. storing
@@ -78,6 +80,8 @@ def generate_from_jams(jams_infile,
                        isolated_events_path=None,
                        disable_sox_warnings=True,
                        txt_path=None,
+                       save_isolated_eventtypes=False,
+                       isolated_eventtypes_path=None,
                        txt_sep='\t'):
     '''
     Generate a soundscape based on an existing scaper JAMS file and return as
@@ -259,7 +263,9 @@ def generate_from_jams(jams_infile,
                            quick_pitch_time=quick_pitch_time,
                            save_isolated_events=save_isolated_events,
                            isolated_events_path=isolated_events_path,
-                           disable_sox_warnings=disable_sox_warnings)
+                           disable_sox_warnings=disable_sox_warnings,
+                           save_isolated_eventtypes=save_isolated_eventtypes,
+                           isolated_eventtypes_path=isolated_eventtypes_path)
     
     # TODO: Stick to heavy handed overwriting for now, in the future we
     #  should consolidate this with what happens inside _instantiate().
@@ -273,6 +279,8 @@ def generate_from_jams(jams_infile,
     ann.sandbox.scaper.peak_normalization_scale_factor = scale_factor
     ann.sandbox.scaper.ref_db_change = ref_db_change
     ann.sandbox.scaper.ref_db_generated = sc.ref_db + ref_db_change
+    ann.sandbox.scaper.save_isolated_eventtypes = save_isolated_eventtypes
+    ann.sandbox.scaper.isolated_eventtypes_path = isolated_eventtypes_path
     
     # If there are slice (trim) operations, need to perform them!
     # Need to add this logic for the isolated events too.
@@ -928,9 +936,37 @@ def _validate_time_stretch(time_stretch_tuple):
         # values?
 
 
+def _validate_event_type(event_type):
+    '''
+    Validate that the event_type is a non empty string without whitespace and special
+    characters.
+
+    Parameters
+    ----------
+    event_type : str or None
+        Event type to be validated.
+
+    Raises
+    ------
+    ScaperError
+        If the validation fails.
+
+    '''
+    if event_type is not None:
+        if not isinstance(event_type, str):
+            raise ScaperError('Event type must be a string.')
+        if len(event_type) == 0:
+            raise ScaperError('Event type cannot be an empty string.')
+        if not re.match(r'^[\w-]+$', event_type):
+            raise ScaperError(
+                'Event type can only contain alphanumeric characters, '
+                'underscores and hyphens. No whitespace or special '
+                'characters are allowed.')
+
+
 def _validate_event(label, source_file, source_time, event_time,
                     event_duration, snr, allowed_labels, pitch_shift,
-                    time_stretch):
+                    time_stretch, event_type):
     '''
     Check that event parameter values are valid.
 
@@ -946,6 +982,7 @@ def _validate_event(label, source_file, source_time, event_time,
         List of allowed labels for the event.
     pitch_shift : tuple or None
     time_stretch: tuple or None
+    event_type: str or None
 
     Raises
     ------
@@ -985,6 +1022,9 @@ def _validate_event(label, source_file, source_time, event_time,
 
     # Time stretch
     _validate_time_stretch(time_stretch)
+
+    # Event type
+    _validate_event_type(event_type)
 
 
 class Scaper(object):
@@ -1211,7 +1251,7 @@ class Scaper(object):
 
         # Validate parameter format and values
         _validate_event(label, source_file, source_time, event_time,
-                        event_duration, snr, self.bg_labels, None, None)
+                        event_duration, snr, self.bg_labels, None, None, None)
 
         # Create background sound event
         bg_event = EventSpec(label=label,
@@ -1222,13 +1262,14 @@ class Scaper(object):
                              snr=snr,
                              role=role,
                              pitch_shift=pitch_shift,
-                             time_stretch=time_stretch)
+                             time_stretch=time_stretch,
+                             event_type=None)
 
         # Add event to background spec
         self.bg_spec.append(bg_event)
 
     def add_event(self, label, source_file, source_time, event_time,
-                  event_duration, snr, pitch_shift, time_stretch):
+                  event_duration, snr, pitch_shift, time_stretch, event_type=None):
         '''
         Add a foreground sound event to the foreground specification.
 
@@ -1282,6 +1323,9 @@ class Scaper(object):
         time_stretch: tuple
             Specifies the time stretch factor (value>1 will make it slower and
             longer, value<1 will makes it faster and shorter).
+        event_type : str or None
+            Specifies the type of the event. This is a string that can be used
+            to categorize the events
 
         Notes
         -----
@@ -1332,7 +1376,7 @@ class Scaper(object):
         # SAFETY CHECKS
         _validate_event(label, source_file, source_time, event_time,
                         event_duration, snr, self.fg_labels, pitch_shift,
-                        time_stretch)
+                        time_stretch, event_type)
 
         # Create event
         event = EventSpec(label=label,
@@ -1343,7 +1387,8 @@ class Scaper(object):
                           snr=snr,
                           role='foreground',
                           pitch_shift=pitch_shift,
-                          time_stretch=time_stretch)
+                          time_stretch=time_stretch,
+                          event_type=event_type)
 
         # Add event to foreground specification
         self.fg_spec.append(event)
@@ -1652,7 +1697,8 @@ class Scaper(object):
                                        snr=snr,
                                        role=role,
                                        pitch_shift=pitch_shift,
-                                       time_stretch=time_stretch)
+                                       time_stretch=time_stretch,
+                                       event_type=event.event_type)
         # Return
         return instantiated_event
 
@@ -1798,7 +1844,10 @@ class Scaper(object):
             disable_instantiation_warnings=None,
             peak_normalization_scale_factor=None,
             ref_db_change=None,
-            ref_db_generated=None)
+            ref_db_generated=None,
+            save_isolated_eventtypes=False,
+            isolated_eventtypes_path=None,
+            )
 
         # Add annotation to jams
         jam.annotations.append(ann)
@@ -1818,7 +1867,9 @@ class Scaper(object):
                         quick_pitch_time=False,
                         save_isolated_events=False,
                         isolated_events_path=None,
-                        disable_sox_warnings=True):
+                        disable_sox_warnings=True,
+                        save_isolated_eventtypes=False,
+                        isolated_eventtypes_path=None):
         '''
         Generate audio based on a scaper annotation and save to disk.
 
@@ -1869,6 +1920,10 @@ class Scaper(object):
         disable_sox_warnings : bool
             When True (default), warnings from the pysox module are suppressed
             unless their level is ``'CRITICAL'``.
+        save_isolated_eventtypes : bool
+            See description at generate.
+        isolated_eventtypes_path : str
+            See description at generate.
 
         Returns
         -------
@@ -1900,6 +1955,7 @@ class Scaper(object):
         Scaper.generate
 
         '''
+        # Check that the annotation is of the scaper namespace
         if ann.namespace != 'scaper':
             raise ScaperError(
                 'Annotation namespace must be scaper, found: {:s}'.format(
@@ -2155,6 +2211,40 @@ class Scaper(object):
                             "source files. In this case the sum of the "
                             "audio of the isolated events will not add up to the "
                             "mixture", ScaperWarning)
+                        
+                # Optionally save isolated eventtypes to disk
+                if save_isolated_eventtypes:
+                    base, ext = os.path.splitext(audio_path)
+                    eventtypes_folder = '{:s}_eventtypes'.format(base)
+                    if not isolated_eventtypes_path is None:
+                        eventtypes_folder = isolated_eventtypes_path
+                    os.makedirs(eventtypes_folder, exist_ok=True)
+
+                    # Create a dict to store the audio for each event type
+                    eventtype_audio = {}
+                    for e in ann.data:
+                        event_type = e.value['event_type']
+                        if event_type is None:
+                            event_type = "no_type"
+                        if event_type not in eventtype_audio:
+                            eventtype_audio[event_type] = []
+                        eventtype_audio[event_type].append(e)
+                    
+                    # Generate audio for each event type and save to disk
+                    for etype, etype_events in eventtype_audio.items():
+                        eventtype_file = os.path.join(eventtypes_folder, etype + ext)
+                        ann.data = etype_events
+                        self._generate_audio(
+                            eventtype_file,
+                            ann,
+                            reverb=reverb,
+                            fix_clipping=fix_clipping,
+                            peak_normalization=peak_normalization,
+                            quick_pitch_time= quick_pitch_time,
+                            save_isolated_events=False,
+                            disable_sox_warnings=disable_sox_warnings,
+                            save_isolated_eventtypes=False)
+               
 
         # Document output paths
         # TODO: this is redundant with audio_path and isolated_events_path that
@@ -2183,7 +2273,9 @@ class Scaper(object):
                  no_audio=False,
                  txt_path=None,
                  txt_sep='\t',
-                 disable_instantiation_warnings=False):
+                 disable_instantiation_warnings=False,
+                 save_isolated_eventtypes=False,
+                 isolated_eventtypes_path=None):
         """
         Generate a soundscape based on the current specification and return as
         an audio file, a JAMS annotation, a simplified annotation list, and a
@@ -2272,6 +2364,16 @@ class Scaper(object):
             When True (default is False), warnings stemming from event
             instantiation (primarily about automatic duration adjustments) are
             disabled. Not recommended other than for testing purposes.
+        save_isolated_eventtypes : bool
+            If True, this will group events by their type (i.e. speakerA,
+            speakerB, etc.) and save them together in one file per type in the 
+            directory defined by `isolated_eventtypes_path`. Events without a
+            type will be saved in a file called `no_type`. The audio of the
+            isolated events sum up to the mixture of all events if reverb is not
+            applied.
+        isolated_eventtypes_path : str
+            Path to folder for saving isolated events grouped by type. If None,
+            defaults to `<audio_path parent folder>/<audio_path name>_eventtypes`.
 
         Returns
         -------
@@ -2333,7 +2435,9 @@ class Scaper(object):
                                      disable_sox_warnings=disable_sox_warnings,
                                      fix_clipping=fix_clipping,
                                      peak_normalization=peak_normalization,
-                                     quick_pitch_time=quick_pitch_time)
+                                     quick_pitch_time=quick_pitch_time,
+                                     save_isolated_eventtypes=save_isolated_eventtypes,
+                                     isolated_eventtypes_path=isolated_eventtypes_path)
 
         # TODO: Stick to heavy handed overwriting for now, in the future we
         #  should consolidate this with what happens inside _instantiate().
@@ -2347,6 +2451,8 @@ class Scaper(object):
         ann.sandbox.scaper.quick_pitch_time = quick_pitch_time
         ann.sandbox.scaper.save_isolated_events = save_isolated_events
         ann.sandbox.scaper.isolated_events_path = isolated_events_path
+        ann.sandbox.scaper.save_isolated_eventtypes = save_isolated_eventtypes
+        ann.sandbox.scaper.isolated_eventtypes_path = isolated_eventtypes_path
         ann.sandbox.scaper.disable_sox_warnings = disable_sox_warnings
         ann.sandbox.scaper.no_audio = no_audio
         ann.sandbox.scaper.txt_path = txt_path
