@@ -1,0 +1,75 @@
+{
+	"info": {
+		"_postman_id": "2779fd26-f585-4eb2-b580-de752dbe9308",
+		"name": "dscaper",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24430689"
+	},
+	"item": [
+		{
+			"name": "new audio",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "postman-cloud:///1f05b459-daeb-4930-9557-26a98386033e"
+						},
+						{
+							"key": "project",
+							"value": "demo1",
+							"type": "text"
+						},
+						{
+							"key": "label",
+							"value": "horn",
+							"type": "text"
+						},
+						{
+							"key": "filename",
+							"value": "17-CAR-Rolls-Royce-Horn.wav",
+							"type": "text"
+						},
+						{
+							"key": "foreground",
+							"value": "true",
+							"type": "text"
+						},
+						{
+							"key": "sandbox",
+							"value": "none",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{dscaper_root}}api/{{api_version}}/audio",
+					"host": [
+						"{{dscaper_root}}api"
+					],
+					"path": [
+						"{{api_version}}",
+						"audio"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "dscaper_root",
+			"value": "http://127.0.0.1:8000/",
+			"type": "default"
+		},
+		{
+			"key": "api_version",
+			"value": "v1",
+			"type": "default"
+		}
+	]
+}
