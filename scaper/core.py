@@ -80,6 +80,8 @@ def generate_from_jams(jams_infile,
                        isolated_events_path=None,
                        disable_sox_warnings=True,
                        txt_path=None,
+                       save_isolated_eventtypes=False,
+                       isolated_eventtypes_path=None,
                        txt_sep='\t'):
     '''
     Generate a soundscape based on an existing scaper JAMS file and return as
@@ -261,7 +263,9 @@ def generate_from_jams(jams_infile,
                            quick_pitch_time=quick_pitch_time,
                            save_isolated_events=save_isolated_events,
                            isolated_events_path=isolated_events_path,
-                           disable_sox_warnings=disable_sox_warnings)
+                           disable_sox_warnings=disable_sox_warnings,
+                           save_isolated_eventtypes=save_isolated_eventtypes,
+                           isolated_eventtypes_path=isolated_eventtypes_path)
     
     # TODO: Stick to heavy handed overwriting for now, in the future we
     #  should consolidate this with what happens inside _instantiate().
@@ -275,6 +279,8 @@ def generate_from_jams(jams_infile,
     ann.sandbox.scaper.peak_normalization_scale_factor = scale_factor
     ann.sandbox.scaper.ref_db_change = ref_db_change
     ann.sandbox.scaper.ref_db_generated = sc.ref_db + ref_db_change
+    ann.sandbox.scaper.save_isolated_eventtypes = save_isolated_eventtypes
+    ann.sandbox.scaper.isolated_eventtypes_path = isolated_eventtypes_path
     
     # If there are slice (trim) operations, need to perform them!
     # Need to add this logic for the isolated events too.
@@ -1838,7 +1844,10 @@ class Scaper(object):
             disable_instantiation_warnings=None,
             peak_normalization_scale_factor=None,
             ref_db_change=None,
-            ref_db_generated=None)
+            ref_db_generated=None,
+            save_isolated_eventtypes=False,
+            isolated_eventtypes_path=None,
+            )
 
         # Add annotation to jams
         jam.annotations.append(ann)

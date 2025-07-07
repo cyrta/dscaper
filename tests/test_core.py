@@ -1615,6 +1615,8 @@ def test_scaper_instantiate():
         # Load regression jam
         regjam = jams.load(REG_JAM_PATH)
         # print(f"Comparing {REG_JAM_PATH} with instantiated jam")
+        # print(f"Scaper jam: {jam}")
+        # print(f"Regression jam: {regjam}")
         _compare_scaper_jams(jam, regjam,
                              exclude_additional_scaper_sandbox_keys=sandbox_exclude)
 
