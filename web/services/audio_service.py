@@ -7,7 +7,6 @@ import time
 import soundfile
 
 audio_path = os.path.join(os.getcwd(), "data", "audio")
-audio_metadata_path = os.path.join(os.getcwd(), "data", "audio_metadata")
 
 def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, update: bool = False):
     """

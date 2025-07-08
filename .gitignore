@@ -12,4 +12,4 @@ scaper/bin/*
 **/.DS_Store
 .venv/*
 data/audio/*
-data/audio_metadata/*
+data/timeline/*
