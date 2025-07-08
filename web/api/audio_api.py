@@ -12,8 +12,6 @@ url_prefix = '/api/v1/audio'
 api_router = APIRouter(prefix=url_prefix)
 
 
-
-
 @api_router.post("/{library}/{label}/{filename}")
 # cant use AudioMetadataCreateDTO because you can't also declare Body fields that you expect to 
 # receive as JSON, as the request will have the body encoded using multipart/form-data instead 
@@ -70,3 +68,17 @@ async def update_audio(library: str,
     )
 
     return audio_service.store_audio(file, metadata, update=True)
+
+
+@api_router.get("/{library}/{label}/{filename}")
+async def get_audio(library: str, label: str, filename: str):
+    """Get audio metadata or the audio file itself.
+    :param library: The library of the audio file.
+    :param label: The label of the audio file.
+    :param filename: The name of the audio file or the metadata file.
+    :return: An AudioMetadata object containing the audio's metadata or the audio file itself.
+    Exceptions:
+        - 404: If the audio file does not exist.
+    """
+    return audio_service.read_audio(library, label, filename)
+    

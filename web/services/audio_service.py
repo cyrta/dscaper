@@ -53,3 +53,32 @@ def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, 
         f.write(metadata_obj.model_dump_json())
     # return the metadata object
     return metadata_obj
+
+def read_audio(library: str, label: str, filename: str):
+    """
+    Read audio file (metadata or audio)
+    
+    :param library: The library of the audio file.
+    :param label: The label of the audio file.
+    :param filename: The name of the audio file.
+    :return: An AudioMetadata object containing the audio's metadata or the audio file itself.
+    Exceptions:
+        - 404: If the audio file does not exist.
+        - 400: If the audio file format is unsupported.
+    """
+    file = os.path.join(audio_path, library, label, filename)
+    if not os.path.exists(file):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content="Audio file not found")
+    base, ext = os.path.splitext(filename)
+    # requesting metadata
+    if ext.lower() == ".json":
+        with open(file, "r") as f:
+            metadata_json = f.read()
+        return AudioMetadata.model_validate_json(metadata_json)  # Use model_validate_json to parse JSON into AudioMetadata
+    # requesting audio file
+    elif ext.lower() in [".wav", ".mp3", ".flac", ".ogg"]:
+        with open(file, "rb") as f:
+            audio_data = f.read()
+        return Response(content=audio_data, media_type="audio/" + ext[1:])
+    else:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Unsupported audio file format")
