@@ -604,6 +604,344 @@
 					"body": "Audio file not found"
 				}
 			]
+		},
+		{
+			"name": "new timeline",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"duration\": 10.5,\r\n    \"seed\": 123,\r\n    \"description\": \"first timeline\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{dscaper_root}}api/{{api_version}}/timeline/{{timeline_name}}",
+					"host": [
+						"{{dscaper_root}}api"
+					],
+					"path": [
+						"{{api_version}}",
+						"timeline",
+						"{{timeline_name}}"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "successfully created timeline",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"duration\": 10.5,\r\n    \"seed\": 123,\r\n    \"description\": \"first timeline\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{dscaper_root}}api/{{api_version}}/timeline/{{timeline_name}}",
+							"host": [
+								"{{dscaper_root}}api"
+							],
+							"path": [
+								"{{api_version}}",
+								"timeline",
+								"{{timeline_name}}"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "date",
+							"value": "Tue, 08 Jul 2025 11:42:06 GMT"
+						},
+						{
+							"key": "server",
+							"value": "uvicorn"
+						},
+						{
+							"key": "content-length",
+							"value": "173"
+						},
+						{
+							"key": "content-type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": \"6debb3b0-d9d9-4bea-9d21-0800c90d1ad7\",\n    \"name\": \"timeline1\",\n    \"duration\": 10.5,\n    \"seed\": 123,\n    \"description\": \"first timeline\",\n    \"ref_db\": -20,\n    \"sandbox\": \"{}\",\n    \"timestamp\": 1751974926\n}"
+				},
+				{
+					"name": "failure - timeline already exists",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"duration\": 10.5,\r\n    \"seed\": 123,\r\n    \"description\": \"first timeline\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{dscaper_root}}api/{{api_version}}/timeline/{{timeline_name}}",
+							"host": [
+								"{{dscaper_root}}api"
+							],
+							"path": [
+								"{{api_version}}",
+								"timeline",
+								"{{timeline_name}}"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "plain",
+					"header": [
+						{
+							"key": "date",
+							"value": "Tue, 08 Jul 2025 11:43:05 GMT"
+						},
+						{
+							"key": "server",
+							"value": "uvicorn"
+						},
+						{
+							"key": "content-length",
+							"value": "36"
+						}
+					],
+					"cookie": [],
+					"body": "Timeline 'timeline1' already exists."
+				}
+			]
+		},
+		{
+			"name": "add background",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"library\": \"demolib\",\r\n    \"label\": [\"const\",\"horn\"],\r\n    \"source_file\": [\"choose\",\"[]\"],\r\n    \"source_time\": [\"const\", \"2\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{dscaper_root}}api/{{api_version}}/timeline/{{timeline_name}}/background",
+					"host": [
+						"{{dscaper_root}}api"
+					],
+					"path": [
+						"{{api_version}}",
+						"timeline",
+						"{{timeline_name}}",
+						"background"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "successfully added background",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"library\": \"demolib\",\r\n    \"label\": [\"const\",\"horn\"],\r\n    \"source_file\": [\"choose\",\"[]\"],\r\n    \"source_time\": [\"const\", \"2\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{dscaper_root}}api/{{api_version}}/timeline/{{timeline_name}}/background",
+							"host": [
+								"{{dscaper_root}}api"
+							],
+							"path": [
+								"{{api_version}}",
+								"timeline",
+								"{{timeline_name}}",
+								"background"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "date",
+							"value": "Tue, 08 Jul 2025 13:30:41 GMT"
+						},
+						{
+							"key": "server",
+							"value": "uvicorn"
+						},
+						{
+							"key": "content-length",
+							"value": "148"
+						},
+						{
+							"key": "content-type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"library\": \"demolib\",\n    \"label\": [\n        \"const\",\n        \"horn\"\n    ],\n    \"source_file\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_time\": [\n        \"const\",\n        \"2\"\n    ],\n    \"id\": \"813f5bb2-a2a5-42ae-b77e-391d6616ffc5\"\n}"
+				}
+			]
+		},
+		{
+			"name": "add event",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n        \"library\": \"demolib\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{dscaper_root}}api/{{api_version}}/timeline/{{timeline_name}}/event",
+					"host": [
+						"{{dscaper_root}}api"
+					],
+					"path": [
+						"{{api_version}}",
+						"timeline",
+						"{{timeline_name}}",
+						"event"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "successfully added background",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"library\": \"demolib\",\r\n    \"label\": [\"const\",\"horn\"],\r\n    \"source_file\": [\"choose\",\"[]\"],\r\n    \"source_time\": [\"const\", \"2\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{dscaper_root}}api/{{api_version}}/timeline/{{timeline_name}}/background",
+							"host": [
+								"{{dscaper_root}}api"
+							],
+							"path": [
+								"{{api_version}}",
+								"timeline",
+								"{{timeline_name}}",
+								"background"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "date",
+							"value": "Tue, 08 Jul 2025 13:30:41 GMT"
+						},
+						{
+							"key": "server",
+							"value": "uvicorn"
+						},
+						{
+							"key": "content-length",
+							"value": "148"
+						},
+						{
+							"key": "content-type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"library\": \"demolib\",\n    \"label\": [\n        \"const\",\n        \"horn\"\n    ],\n    \"source_file\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_time\": [\n        \"const\",\n        \"2\"\n    ],\n    \"id\": \"813f5bb2-a2a5-42ae-b77e-391d6616ffc5\"\n}"
+				},
+				{
+					"name": "successfully added event",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n        \"library\": \"demolib\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{dscaper_root}}api/{{api_version}}/timeline/{{timeline_name}}/event",
+							"host": [
+								"{{dscaper_root}}api"
+							],
+							"path": [
+								"{{api_version}}",
+								"timeline",
+								"{{timeline_name}}",
+								"event"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "date",
+							"value": "Tue, 08 Jul 2025 13:42:50 GMT"
+						},
+						{
+							"key": "server",
+							"value": "uvicorn"
+						},
+						{
+							"key": "content-length",
+							"value": "282"
+						},
+						{
+							"key": "content-type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"library\": \"demolib\",\n    \"label\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_file\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_duration\": [\n        \"const\",\n        \"5\"\n    ],\n    \"snr\": [\n        \"const\",\n        \"0\"\n    ],\n    \"pitch_shift\": null,\n    \"time_stretch\": null,\n    \"event_type\": null,\n    \"id\": \"beca8184-f1e6-4e45-af31-3583d65d7dc0\"\n}"
+				}
+			]
 		}
 	],
 	"variable": [
@@ -630,6 +968,11 @@
 		{
 			"key": "filename",
 			"value": "17-CAR-Rolls-Royce-Horn.wav",
+			"type": "default"
+		},
+		{
+			"key": "timeline_name",
+			"value": "timeline1",
 			"type": "default"
 		}
 	]

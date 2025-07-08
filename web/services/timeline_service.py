@@ -41,6 +41,7 @@ def create_timeline(name: str, properties: TimelineCreateDTO):
     # Return the created timeline object
     return timeline
     
+
 def add_background(name: str, properties: DscaperBackground):
     """Add a background to the timeline.
     
@@ -74,4 +75,42 @@ def add_background(name: str, properties: DscaperBackground):
     # Return a response indicating success
     return background
 
+
+def add_event(name: str, properties: DscaperEvent):
+    """Add an event to the timeline.
     
+    :param name: The name of the timeline.
+    :param properties: Properties for the event.
+    :return: A DscaperEvent object containing the added event's metadata.
+    Exceptions:
+        - 404: If the timeline does not exist.
+    """
+    timeline_path = os.path.join(timeline_basedir, name)
+    timeline_config = os.path.join(timeline_path, "timeline.json")
+    # Check if the timeline exists
+    if not os.path.exists(timeline_config):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+    # Create the events directory if it does not exist
+    events_path = os.path.join(timeline_path, "events")
+    os.makedirs(events_path, exist_ok=True)
+    # Create the event object
+    event_id = str(uuid.uuid4())
+    event = DscaperEvent(
+        library=properties.library,
+        label=properties.label,
+        source_file=properties.source_file,
+        source_time=properties.source_time,
+        event_time=properties.event_time,
+        event_duration=properties.event_duration,
+        snr=properties.snr,
+        pitch_shift=properties.pitch_shift,
+        time_stretch=properties.time_stretch,
+        event_type=properties.event_type,
+        id=event_id
+    )
+    # Save the event to a JSON file
+    event_file = os.path.join(events_path, f"{event_id}.json")
+    with open(event_file, "w") as f:
+        f.write(event.model_dump_json())
+    # Return a response indicating success
+    return event

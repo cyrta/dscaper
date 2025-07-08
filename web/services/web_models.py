@@ -43,6 +43,7 @@ class DscaperBackground(BaseModel):
     id: str | None = None # set by the server
 
 class DscaperEvent(BaseModel):
+    library: str
     label: list[str] = ['choose', '[]']
     source_file: list[str] = ['choose', '[]']
     source_time: list[str] = ['const', '0']
@@ -52,5 +53,5 @@ class DscaperEvent(BaseModel):
     pitch_shift: list[str] | None = None
     time_stretch: list[str] | None = None
     event_type: str | None = None
-    id: str # set by the server
+    id: str | None = None # set by the server
 
