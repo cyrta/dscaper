@@ -5,69 +5,68 @@ from typing import Any, Annotated
 import uuid
 import os
 import soundfile
-
+from web.services.web_models import AudioMetadata, AudioMetadataSaveDTO
+import web.services.audio_service as audio_service
 
 url_prefix = '/api/v1/audio'
 api_router = APIRouter(prefix=url_prefix)
 
-audio_path = os.path.join(os.getcwd(), "data", "audio")
-audio_metadata_path = os.path.join(os.getcwd(), "data", "audio_metadata")
 
 
-class AudioMetadataCreateDTO(BaseModel):
-    project: str
-    label: str
-    filename: str
-    foreground: bool = True
-    sandbox: str = "{}"  # JSON string
 
-class AudioMetadata(BaseModel):
-    id: str # set by the server
-    project: str
-    label: str
-    filename: str
-    foreground: bool
-    sandbox: str # JSON string
-    timestamp: int # set by the server
-    duration: float # set by the server
-
-
-@api_router.post("/")
+@api_router.post("/{library}/{label}/{filename}")
 # cant use AudioMetadataCreateDTO because you can't also declare Body fields that you expect to 
 # receive as JSON, as the request will have the body encoded using multipart/form-data instead 
 # of application/json (see fastapi docs)
-async def store_audio(
+async def add_audio(library: str, 
+                      label: str, 
+                      filename: str,
                       file: Annotated[bytes, File()], 
-                      project: Annotated[str, Form()],
-                      label: Annotated[str, Form()],
-                      filename: Annotated[str, Form()],
                       foreground: Annotated[bool, Form()],
                       sandbox: Annotated[str, Form()]):
-    # check if file is empty
-    if len(file) == 0:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="File is empty")
-    # generate a unique ID for the file
-    file_id = uuid.uuid4().hex
-    # save the file to the audio path
-    base, ext = os.path.splitext(filename)
-    temp_file = os.path.join(audio_path, file_id+ext) 
-    with open(temp_file, "wb") as f:
-        f.write(file)
-    # check if audio file is valid
-    try:
-        duration = soundfile.info(temp_file).duration
-    except RuntimeError as e:
-        # delete the file if it is not valid
-        os.remove(temp_file)
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content=f"Invalid audio file: {str(e)}")
-    # create the metadata object
-    timestamp = int(time.time())
-    metadata = AudioMetadata(id=file_id, project=project, label=label, filename=filename, foreground=foreground, 
-                             sandbox=sandbox, timestamp=timestamp, duration=duration)
-    # save the metadata to the audio metadata path
-    metadata_file = os.path.join(audio_metadata_path, file_id + ".json")
-    with open(metadata_file, "w") as f:
-        f.write(metadata.model_dump_json())
-    # return the metadata object
-    return metadata
+    """Store audio file and its metadata.
+    :param library: The library to store the audio in.
+    :param label: The label for the audio file.
+    :param filename: The name of the audio file.
+    :param file: The audio file to be stored.
+    :param foreground: Whether the audio is a foreground sound.
+    :param sandbox: JSON string containing sandbox data.
+    :return: An AudioMetadata object containing the stored audio's metadata.
+    Exceptions:
+        - 400: If the file is empty or invalid.
+        - 400: If the file already exists.
+    """
+    metadata = AudioMetadataSaveDTO(
+        library=library,
+        label=label,
+        filename=filename,
+        foreground=foreground,
+        sandbox=sandbox
+    )
+
+    return audio_service.store_audio(file, metadata)
+
     
+@api_router.put("/{library}/{label}/{filename}")
+async def update_audio(library: str, 
+                      label: str, 
+                      filename: str,
+                      file: Annotated[bytes, File()], 
+                      foreground: Annotated[bool, Form()],
+                      sandbox: Annotated[str, Form()]):
+    """Update audio file and its metadata.
+    see add_audio for parameter descriptions.
+    :return: An AudioMetadata object containing the updated audio's metadata.
+    Exceptions:
+        - 400: If the file is empty or invalid.
+        - 400: If the file does not exist.
+    """
+    metadata = AudioMetadataSaveDTO(
+        library=library,
+        label=label,
+        filename=filename,
+        foreground=foreground,
+        sandbox=sandbox
+    )
+
+    return audio_service.store_audio(file, metadata, update=True)

@@ -20,19 +20,168 @@
 							"src": "postman-cloud:///1f05b459-daeb-4930-9557-26a98386033e"
 						},
 						{
-							"key": "project",
-							"value": "demo1",
+							"key": "foreground",
+							"value": "true",
 							"type": "text"
 						},
 						{
-							"key": "label",
-							"value": "horn",
+							"key": "sandbox",
+							"value": "none",
 							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{dscaper_root}}api/{{api_version}}/audio/{{library}}/{{label}}/{{filename}}",
+					"host": [
+						"{{dscaper_root}}api"
+					],
+					"path": [
+						"{{api_version}}",
+						"audio",
+						"{{library}}",
+						"{{label}}",
+						"{{filename}}"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "successfully added audio",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1f05b459-daeb-4930-9557-26a98386033e"
+								},
+								{
+									"key": "foreground",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "sandbox",
+									"value": "none",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dscaper_root}}api/{{api_version}}/audio/{{library}}/{{label}}/{{filename}}",
+							"host": [
+								"{{dscaper_root}}api"
+							],
+							"path": [
+								"{{api_version}}",
+								"audio",
+								"{{library}}",
+								"{{label}}",
+								"{{filename}}"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "date",
+							"value": "Tue, 08 Jul 2025 08:35:03 GMT"
 						},
 						{
-							"key": "filename",
-							"value": "17-CAR-Rolls-Royce-Horn.wav",
-							"type": "text"
+							"key": "server",
+							"value": "uvicorn"
+						},
+						{
+							"key": "content-length",
+							"value": "209"
+						},
+						{
+							"key": "content-type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": \"d41b2b57-e97a-4b13-a2a0-46c8c91f47a6\",\n    \"library\": \"demolib\",\n    \"label\": \"horn\",\n    \"filename\": \"17-CAR-Rolls-Royce-Horn.wav\",\n    \"foreground\": true,\n    \"sandbox\": \"none\",\n    \"timestamp\": 1751963704,\n    \"duration\": 0.6875056689342404\n}"
+				},
+				{
+					"name": "failure - file already exists",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1f05b459-daeb-4930-9557-26a98386033e"
+								},
+								{
+									"key": "foreground",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "sandbox",
+									"value": "none",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dscaper_root}}api/{{api_version}}/audio/{{library}}/{{label}}/{{filename}}",
+							"host": [
+								"{{dscaper_root}}api"
+							],
+							"path": [
+								"{{api_version}}",
+								"audio",
+								"{{library}}",
+								"{{label}}",
+								"{{filename}}"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "plain",
+					"header": [
+						{
+							"key": "date",
+							"value": "Tue, 08 Jul 2025 08:36:46 GMT"
+						},
+						{
+							"key": "server",
+							"value": "uvicorn"
+						},
+						{
+							"key": "content-length",
+							"value": "45"
+						}
+					],
+					"cookie": [],
+					"body": "File already exists in. Use PUT to update it."
+				}
+			]
+		},
+		{
+			"name": "update audio",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "postman-cloud:///1f05b459-daeb-4930-9557-26a98386033e"
 						},
 						{
 							"key": "foreground",
@@ -47,17 +196,143 @@
 					]
 				},
 				"url": {
-					"raw": "{{dscaper_root}}api/{{api_version}}/audio",
+					"raw": "{{dscaper_root}}api/{{api_version}}/audio/{{library}}/{{label}}/{{filename}}",
 					"host": [
 						"{{dscaper_root}}api"
 					],
 					"path": [
 						"{{api_version}}",
-						"audio"
+						"audio",
+						"{{library}}",
+						"{{label}}",
+						"{{filename}}"
 					]
 				}
 			},
-			"response": []
+			"response": [
+				{
+					"name": "successfully update audio",
+					"originalRequest": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1f05b459-daeb-4930-9557-26a98386033e"
+								},
+								{
+									"key": "foreground",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "sandbox",
+									"value": "none",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dscaper_root}}api/{{api_version}}/audio/{{library}}/{{label}}/{{filename}}",
+							"host": [
+								"{{dscaper_root}}api"
+							],
+							"path": [
+								"{{api_version}}",
+								"audio",
+								"{{library}}",
+								"{{label}}",
+								"{{filename}}"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "date",
+							"value": "Tue, 08 Jul 2025 09:05:29 GMT"
+						},
+						{
+							"key": "server",
+							"value": "uvicorn"
+						},
+						{
+							"key": "content-length",
+							"value": "210"
+						},
+						{
+							"key": "content-type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": \"fbc86fde-47b7-4440-b57b-e46aaa3a89bd\",\n    \"library\": \"demolib\",\n    \"label\": \"horn2\",\n    \"filename\": \"17-CAR-Rolls-Royce-Horn.wav\",\n    \"foreground\": true,\n    \"sandbox\": \"none\",\n    \"timestamp\": 1751965530,\n    \"duration\": 0.6875056689342404\n}"
+				},
+				{
+					"name": "faulure - file does not exist",
+					"originalRequest": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1f05b459-daeb-4930-9557-26a98386033e"
+								},
+								{
+									"key": "foreground",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "sandbox",
+									"value": "none",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{dscaper_root}}api/{{api_version}}/audio/{{library}}/{{label}}/{{filename}}",
+							"host": [
+								"{{dscaper_root}}api"
+							],
+							"path": [
+								"{{api_version}}",
+								"audio",
+								"{{library}}",
+								"{{label}}",
+								"{{filename}}"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "plain",
+					"header": [
+						{
+							"key": "date",
+							"value": "Tue, 08 Jul 2025 09:06:48 GMT"
+						},
+						{
+							"key": "server",
+							"value": "uvicorn"
+						},
+						{
+							"key": "content-length",
+							"value": "43"
+						}
+					],
+					"cookie": [],
+					"body": "File does not exist. Use POST to create it."
+				}
+			]
 		}
 	],
 	"variable": [
@@ -69,6 +344,21 @@
 		{
 			"key": "api_version",
 			"value": "v1",
+			"type": "default"
+		},
+		{
+			"key": "library",
+			"value": "demolib",
+			"type": "default"
+		},
+		{
+			"key": "label",
+			"value": "horn",
+			"type": "default"
+		},
+		{
+			"key": "filename",
+			"value": "17-CAR-Rolls-Royce-Horn.wav",
 			"type": "default"
 		}
 	]
