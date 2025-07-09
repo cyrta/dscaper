@@ -1213,7 +1213,7 @@ class Scaper(object):
         '''
         self.random_state = _check_random_state(random_state)
 
-    def add_background(self, label, source_file, source_time):
+    def add_background(self, label, source_file, source_time, library=None):
         '''
         Add a background recording to the background specification.
 
@@ -1248,6 +1248,11 @@ class Scaper(object):
             smaller than ``<source file duration> - <soundscape duration>``.
             Larger values will be automatically changed to fulfill this
             requirement when calling ``Scaper.generate``.
+        library : str or None
+            Specifies the library from which the background is taken. If not None, 
+            audio is sampled from the library folder instead of the
+            background folder. This is useful for sharing samples between
+            different projects.
 
         Notes
         -----
@@ -1295,7 +1300,7 @@ class Scaper(object):
 
         # Validate parameter format and values
         _validate_event(label, source_file, source_time, event_time,
-                        event_duration, snr, self.bg_labels, None, None, None, None)
+                        event_duration, snr, self.bg_labels, None, None, None, library)
 
         # Create background sound event
         bg_event = EventSpec(label=label,
@@ -1308,10 +1313,11 @@ class Scaper(object):
                              pitch_shift=pitch_shift,
                              time_stretch=time_stretch,
                              event_type=None,
-                             library=None)
+                             library=library)
 
         # Add event to background spec
         self.bg_spec.append(bg_event)
+        
 
     def add_event(self, label, source_file, source_time, event_time,
                   event_duration, snr, pitch_shift, time_stretch, event_type=None, library=None):
