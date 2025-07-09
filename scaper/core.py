@@ -985,6 +985,23 @@ def _validate_library(library):
         raise ScaperError('Library must be a string.')
     if not os.path.isdir(library):
         raise ScaperError('Library must be a valid directory.')
+    # check that library contains at least one subdirectory
+    if not any(os.path.isdir(os.path.join(library, d)) for d in os.listdir(library)):
+        raise ScaperError('Library must contain at least one subdirectory with audio files.')
+    # check that all library subdirectories contain at least one audio file
+    # with a valid extension
+
+    audio_extensions = ('.wav', '.mp3', '.flac', '.ogg')
+    for subdir in os.listdir(library):
+        subdir_path = os.path.join(library, subdir)
+        if os.path.isdir(subdir_path):
+            if not any(os.path.isfile(os.path.join(subdir_path, f)) and
+                       f.lower().endswith(audio_extensions)
+                       for f in os.listdir(subdir_path)):
+                raise ScaperError(
+                    'Library subdirectory {:s} does not contain any audio '
+                    'files with valid extensions.'.format(subdir_path))
+  
 
 
 def _validate_event(label, source_file, source_time, event_time,

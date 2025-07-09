@@ -1184,6 +1184,12 @@ def test_validate_library():
     # invalid library path
     invalid_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'invalidlib')
     pytest.raises(ScaperError, scaper.core._validate_library, invalid_path)
+    # library path without subfolders
+    no_subfolders_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'emptylib')
+    pytest.raises(ScaperError, scaper.core._validate_library, no_subfolders_path)
+    # library path with subfolders but no audio files
+    no_audio_files_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'noaudio')
+    pytest.raises(ScaperError, scaper.core._validate_library, no_audio_files_path)
     # valid library path
     valid_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'testlib')
     scaper.core._validate_library(valid_path)
