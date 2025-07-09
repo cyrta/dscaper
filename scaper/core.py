@@ -1111,10 +1111,12 @@ class Scaper(object):
         ----------
         duration : float
             Duration of the soundscape, in seconds.
-        fg_path : str
-            Path to foreground folder.
-        bg_path : str
-            Path to background folder.
+        fg_path : str or None
+            Path to foreground folder. If None, test folder will be used.
+            This only makes sense if all events have a library specified.
+        bg_path : str or None
+            Path to background folder. . If None, test folder will be used.
+            This only makes sense if all events have a library specified.
         protected_labels : list 
             Provide a list of protected foreground labels. When a foreground
             label is in the protected list it means that when a sound event
@@ -1150,6 +1152,13 @@ class Scaper(object):
         # Start with empty specifications
         self.fg_spec = []
         self.bg_spec = []
+
+        if fg_path is None:
+            # If no foreground path is provided, use the test folder
+            fg_path = os.path.join(os.getcwd(), "tests", "data", "audio", "foreground")
+        if bg_path is None:
+            # If no background path is provided, use the test folder
+            bg_path = os.path.join(os.getcwd(), "tests", "data", "audio", "background")
 
         # Validate paths and set
         expanded_fg_path = os.path.expanduser(fg_path)
@@ -1317,7 +1326,7 @@ class Scaper(object):
 
         # Add event to background spec
         self.bg_spec.append(bg_event)
-        
+
 
     def add_event(self, label, source_file, source_time, event_time,
                   event_duration, snr, pitch_shift, time_stretch, event_type=None, library=None):
