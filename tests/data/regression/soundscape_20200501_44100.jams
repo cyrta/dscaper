@@ -29,7 +29,8 @@
             "role": "background",
             "pitch_shift": null,
             "time_stretch": null,
-            "event_type": null
+            "event_type": null,
+            "library": null
           },
           "confidence": 1.0
         },
@@ -46,7 +47,8 @@
             "role": "foreground",
             "pitch_shift": null,
             "time_stretch": null,
-            "event_type": null
+            "event_type": null,
+            "library": null
           },
           "confidence": 1.0
         },
@@ -63,7 +65,8 @@
             "role": "foreground",
             "pitch_shift": 1,
             "time_stretch": null,
-            "event_type": null
+            "event_type": null,
+            "library": null
           },
           "confidence": 1.0
         },
@@ -80,7 +83,8 @@
             "role": "foreground",
             "pitch_shift": null,
             "time_stretch": 1.2,
-            "event_type": null
+            "event_type": null,
+            "library": null
           },
           "confidence": 1.0
         }
@@ -120,6 +124,7 @@
               "foreground",
               null,
               null,
+              null,
               null
             ],
             [
@@ -152,6 +157,7 @@
                 "const",
                 1
               ],
+              null,
               null,
               null
             ],
@@ -186,6 +192,7 @@
                 "const",
                 1.2
               ],
+              null,
               null
             ]
           ],
@@ -216,6 +223,7 @@
                 0
               ],
               "background",
+              null,
               null,
               null,
               null

@@ -1175,6 +1175,20 @@ def test_validate_event_type():
     scaper.core._validate_event_type("valid_event-type")
 
 
+def test_validate_library():
+    # library must be a string
+    pytest.raises(ScaperError, scaper.core._validate_library, 5)
+    pytest.raises(ScaperError, scaper.core._validate_library, ['list'])
+    # library must not be an empty string
+    pytest.raises(ScaperError, scaper.core._validate_library, "")
+    # invalid library path
+    invalid_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'invalidlib')
+    pytest.raises(ScaperError, scaper.core._validate_library, invalid_path)
+    # valid library path
+    valid_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'testlib')
+    scaper.core._validate_library(valid_path)
+
+
 def test_validate_event():
 
     bad_allowed_labels = [0, 'yes', 1j, np.array([1, 2, 3])]
@@ -1190,7 +1204,8 @@ def test_validate_event():
                       allowed_labels=bal,
                       pitch_shift=None,
                       time_stretch=None,
-                      event_type=None)
+                      event_type=None,
+                      library=None)
 
 
 def test_scaper_init():
@@ -1311,7 +1326,8 @@ def test_scaper_add_background():
                                   role='background',
                                   pitch_shift=None,
                                   time_stretch=None,
-                                  event_type=None)
+                                  event_type=None,
+                                  library=None)
     assert sc.bg_spec == [bg_event_expected]
 
 
@@ -1342,7 +1358,8 @@ def test_scaper_add_event():
                                   role='foreground',
                                   pitch_shift=('normal', 0, 1),
                                   time_stretch=('uniform', 0.8, 1.2),
-                                  event_type=None)
+                                  event_type=None,
+                                  library=None)
     assert sc.fg_spec[0] == fg_event_expected
 
 
@@ -1358,7 +1375,8 @@ def test_scaper_instantiate_event():
                          role='foreground',
                          pitch_shift=('normal', 0, 1),
                          time_stretch=('uniform', 0.8, 1.2),
-                         event_type=None)
+                         event_type=None,
+                         library=None)
 
     # test valid case
     sc = scaper.Scaper(10.0, fg_path=FG_PATH, bg_path=BG_PATH)

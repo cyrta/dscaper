@@ -63,7 +63,7 @@ SUPPORTED_DIST = {"const": _sample_const,
 EventSpec = namedtuple(
     'EventSpec',
     ['label', 'source_file', 'source_time', 'event_time', 'event_duration',
-     'snr', 'role', 'pitch_shift', 'time_stretch','event_type'])
+     'snr', 'role', 'pitch_shift', 'time_stretch','event_type', 'library'])
 '''
 Container for storing event specifications, either probabilistic (i.e. using
 distribution tuples to specify possible values) or instantiated (i.e. storing
@@ -964,9 +964,32 @@ def _validate_event_type(event_type):
                 'characters are allowed.')
 
 
+def _validate_library(library):
+    '''
+    Validate that a library is a valid Scaper library.
+
+    Parameters
+    ----------
+    library : str or None
+        path to the library
+
+    Raises
+    ------
+    ScaperError
+        If the validation fails.
+
+    '''
+    if library is None:
+        return
+    if not isinstance(library, str):
+        raise ScaperError('Library must be a string.')
+    if not os.path.isdir(library):
+        raise ScaperError('Library must be a valid directory.')
+
+
 def _validate_event(label, source_file, source_time, event_time,
                     event_duration, snr, allowed_labels, pitch_shift,
-                    time_stretch, event_type):
+                    time_stretch, event_type, library):
     '''
     Check that event parameter values are valid.
 
@@ -983,6 +1006,7 @@ def _validate_event(label, source_file, source_time, event_time,
     pitch_shift : tuple or None
     time_stretch: tuple or None
     event_type: str or None
+    library : str or None
 
     Raises
     ------
@@ -1025,6 +1049,9 @@ def _validate_event(label, source_file, source_time, event_time,
 
     # Event type
     _validate_event_type(event_type)
+
+    # Library
+    _validate_library(library)
 
 
 class Scaper(object):
@@ -1251,7 +1278,7 @@ class Scaper(object):
 
         # Validate parameter format and values
         _validate_event(label, source_file, source_time, event_time,
-                        event_duration, snr, self.bg_labels, None, None, None)
+                        event_duration, snr, self.bg_labels, None, None, None, None)
 
         # Create background sound event
         bg_event = EventSpec(label=label,
@@ -1263,13 +1290,14 @@ class Scaper(object):
                              role=role,
                              pitch_shift=pitch_shift,
                              time_stretch=time_stretch,
-                             event_type=None)
+                             event_type=None,
+                             library=None)
 
         # Add event to background spec
         self.bg_spec.append(bg_event)
 
     def add_event(self, label, source_file, source_time, event_time,
-                  event_duration, snr, pitch_shift, time_stretch, event_type=None):
+                  event_duration, snr, pitch_shift, time_stretch, event_type=None, library=None):
         '''
         Add a foreground sound event to the foreground specification.
 
@@ -1326,6 +1354,11 @@ class Scaper(object):
         event_type : str or None
             Specifies the type of the event. This is a string that can be used
             to categorize the events
+        library : str or None
+            Specifies the library from which the event is taken. If not None, 
+            audio is sampled from the library folder instead of the
+            foreground folder. This is useful for sharing samples between
+            different projects.
 
         Notes
         -----
@@ -1376,7 +1409,7 @@ class Scaper(object):
         # SAFETY CHECKS
         _validate_event(label, source_file, source_time, event_time,
                         event_duration, snr, self.fg_labels, pitch_shift,
-                        time_stretch, event_type)
+                        time_stretch, event_type, library)
 
         # Create event
         event = EventSpec(label=label,
@@ -1388,7 +1421,8 @@ class Scaper(object):
                           role='foreground',
                           pitch_shift=pitch_shift,
                           time_stretch=time_stretch,
-                          event_type=event_type)
+                          event_type=event_type,
+                          library=library)
 
         # Add event to foreground specification
         self.fg_spec.append(event)
@@ -1698,7 +1732,8 @@ class Scaper(object):
                                        role=role,
                                        pitch_shift=pitch_shift,
                                        time_stretch=time_stretch,
-                                       event_type=event.event_type)
+                                       event_type=event.event_type,
+                                       library=event.library)
         # Return
         return instantiated_event
 
