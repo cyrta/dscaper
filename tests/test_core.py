@@ -2140,6 +2140,52 @@ def test_generate_isolated_eventtypes():
     shutil.rmtree(isolated_events_path)
 
 
+def test_generate_from_library():
+
+    soundscape_duration = 10.0
+    sc = scaper.Scaper(soundscape_duration, None, None)
+    sc.ref_db = -20
+    sc.sr = 44100
+
+    library_path = os.path.join(os.getcwd(),'tests', 'data', 'libraries','testlib')
+
+    sc.add_background(label=('choose', []),
+                  source_file=('choose', []),
+                  source_time=('const', 0),
+                  library=library_path)
+    sc.add_event(label=('choose', []),
+                source_file=('choose', []),
+                source_time=('const', 0),
+                event_time=('uniform', 0, 9),
+                event_duration=('truncnorm', 3, 1, 0.5, 5),
+                snr=('normal', 10, 3),
+                pitch_shift=('uniform', -2, 2),
+                time_stretch=('uniform', 0.8, 1.2),
+                library=library_path)
+    
+    tmpfiles = []
+    with _close_temp_files(tmpfiles):
+        temp_wav_file = tempfile.NamedTemporaryFile(suffix='.wav', delete=True)
+        temp_jam_file = tempfile.NamedTemporaryFile(suffix='.jams', delete=True)
+        temp_txt_file = tempfile.NamedTemporaryFile(suffix='.txt', delete=True)
+        tmpfiles.append(temp_wav_file)
+        tmpfiles.append(temp_jam_file)
+        tmpfiles.append(temp_txt_file)
+        
+        sc.generate(temp_wav_file.name, temp_jam_file.name,
+                allow_repeated_label=True,
+                allow_repeated_source=True,
+                reverb=0,
+                disable_sox_warnings=True,
+                no_audio=False,
+                txt_path=temp_txt_file.name)
+        
+        # make sure files were created
+        assert os.path.exists(temp_wav_file.name)
+        assert os.path.exists(temp_jam_file.name)   
+        assert os.path.exists(temp_txt_file.name)
+
+
 def test_generate():
     for sr in SAMPLE_RATES:
         REG_WAV_PATH, REG_JAM_PATH, REG_TXT_PATH = TEST_PATHS[sr]['REG']
