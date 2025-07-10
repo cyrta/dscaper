@@ -8,6 +8,7 @@ import soundfile
 
 audio_path = os.path.join(os.getcwd(), "data", "audio")
 
+
 def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, update: bool = False):
     """
     Store audio file and its metadata.
@@ -53,6 +54,7 @@ def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, 
     # return the metadata object
     return metadata_obj
 
+
 def read_audio(library: str, label: str, filename: str):
     """
     Read audio file (metadata or audio)
@@ -81,3 +83,55 @@ def read_audio(library: str, label: str, filename: str):
         return Response(content=audio_data, media_type="audio/" + ext[1:])
     else:
         return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Unsupported audio file format")
+    
+
+def get_libraries():
+    """
+    Get a list of all audio libraries.
+    
+    :return: A list of library names.
+    """
+    libraries = []
+    for root, dirs, files in os.walk(audio_path):
+        if root == audio_path:
+            libraries.extend(dirs)
+    return libraries
+
+
+def get_filenames(library: str, label: str):
+    """
+    Get a list of all filenames in a specific audio label.
+    
+    :param library: The library to get filenames from.
+    :param label: The label to get filenames from.
+    :return: A list of filenames in the specified label.
+    Exceptions:
+        - 404: If the library or label does not exist.
+    """
+    library_path = os.path.join(audio_path, library, label)
+    if not os.path.exists(library_path):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content="Library or label not found")
+    
+    filenames = []
+    for file in os.listdir(library_path):
+        if os.path.isfile(os.path.join(library_path, file)):
+            filenames.append(file)
+    return filenames
+
+
+def get_labels(library: str):
+    """
+    Get a list of all labels in a specific audio library.
+    
+    :param library: The library to get labels from.
+    :return: A list of label names in the specified library.
+    """
+    library_path = os.path.join(audio_path, library)
+    if not os.path.exists(library_path):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content="Library not found")
+    
+    labels = []
+    for root, dirs, files in os.walk(library_path):
+        if root == library_path:
+            labels.extend(dirs)
+    return labels

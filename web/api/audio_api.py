@@ -63,6 +63,37 @@ async def update_audio(library: str,
     return audio_service.store_audio(file, metadata, update=True)
 
 
+@api_router.get("/")
+async def get_libraries():
+    """Get a list of all audio libraries.
+    :return: A list of library names.
+    """
+    return audio_service.get_libraries()               
+
+
+@api_router.get("/{library}")
+async def get_labels(library: str):
+    """Get a list of all labels in a specific audio library.
+    :param library: The library to get labels from.
+    :return: A list of label names in the specified library.
+    Exceptions:
+        - 404: If the library does not exist.
+    """
+    return audio_service.get_labels(library)
+
+
+@api_router.get("/{library}/{label}")
+async def get_filenames(library: str, label: str):
+    """Get a list of all filenames in a specific audio label.
+    :param library: The library to get filenames from.
+    :param label: The label to get filenames from.
+    :return: A list of filenames in the specified label.
+    Exceptions:
+        - 404: If the library or label does not exist.
+    """
+    return audio_service.get_filenames(library, label)
+
+
 @api_router.get("/{library}/{label}/{filename}")
 async def get_audio(library: str, label: str, filename: str):
     """Get audio metadata or the audio file itself.
