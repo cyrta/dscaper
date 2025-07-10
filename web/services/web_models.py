@@ -57,3 +57,4 @@ class DscaperGenerate(BaseModel):
     save_isolated_eventtypes: bool = False
     id: str | None = None # set by the server
     timestamp: int = 0 # set by the server
+    generated_files: list[str] = []  # List of generated audio files, set by the server

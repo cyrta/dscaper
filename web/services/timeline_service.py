@@ -136,15 +136,12 @@ def generate_timeline(name: str, properties: DscaperGenerate):
     # Load the timeline configuration
     with open(timeline_config, "r") as f:
         timeline = DscaperTimeline.model_validate_json(f.read())
-    # Save the generation properties
+    # add properties to the generation
     generate_id = str(uuid.uuid4())
     generate_dir = os.path.join(generate_base, generate_id)
     os.makedirs(generate_dir, exist_ok=True)
     properties.id = generate_id
     properties.timestamp = int(time.time())
-    properties_file = os.path.join(generate_dir, "generate.json")
-    with open(properties_file, "w") as f:
-        f.write(properties.model_dump_json())
     # Use scaper to generate the timeline
     sc = scaper.Scaper(
         duration=timeline.duration,
@@ -200,8 +197,173 @@ def generate_timeline(name: str, properties: DscaperGenerate):
         save_isolated_events=properties.save_isolated_events,
         save_isolated_eventtypes=properties.save_isolated_eventtypes
     )
-    return Response(status_code=status.HTTP_200_OK, content=f"Timeline '{name}' generated successfully.")
+    # add the generated files in the properties
+    properties.generated_files = []
+    for file in os.listdir(generate_dir):
+        if file.endswith(('.wav', '.jams', '.txt')):
+            properties.generated_files.append(file)
+    # Save the properties to a JSON file
+    properties_file = os.path.join(generate_dir, "generate.json")
+    with open(properties_file, "w") as f:
+        f.write(properties.model_dump_json())
+    return properties
 
+
+def list_timelines():
+    """List all timelines.
+
+    :return: A list of timelines.
+    """
+    timelines = []
+    for root, dirs, files in os.walk(timeline_basedir):
+        if root == timeline_basedir:
+            for dir_name in dirs:
+                timeline_path = os.path.join(root, dir_name, "timeline.json")
+                if os.path.exists(timeline_path):
+                    with open(timeline_path, "r") as f:
+                        timeline = DscaperTimeline.model_validate_json(f.read())
+                        timelines.append(timeline)
+    return timelines
+
+
+def list_backgrounds(name: str):
+    """List all backgrounds in the timeline.
+    
+    :param name: The name of the timeline.
+    :return: A list of backgrounds.
+    Exceptions:
+        - 404: If the timeline does not exist.
+    """
+    timeline_path = os.path.join(timeline_basedir, name)
+    background_path = os.path.join(timeline_path, "background")
+    # Check if the timeline exists
+    if not os.path.exists(background_path):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+    backgrounds = []
+    for bg_file in os.listdir(background_path):
+        bg_file_path = os.path.join(background_path, bg_file)
+        if os.path.isfile(bg_file_path):
+            with open(bg_file_path, "r") as f:
+                background = DscaperBackground.model_validate_json(f.read())
+                backgrounds.append(background)
+    return backgrounds
+
+
+def list_events(name: str):
+    """List all events in the timeline.
+    
+    :param name: The name of the timeline.
+    :return: A list of events.
+    Exceptions:
+        - 404: If the timeline does not exist.
+    """
+    timeline_path = os.path.join(timeline_basedir, name)
+    events_path = os.path.join(timeline_path, "events")
+    # Check if the timeline exists
+    if not os.path.exists(events_path):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+    events = []
+    for event_file in os.listdir(events_path):
+        event_file_path = os.path.join(events_path, event_file)
+        if os.path.isfile(event_file_path):
+            with open(event_file_path, "r") as f:
+                event = DscaperEvent.model_validate_json(f.read())
+                events.append(event)
+    return events
+
+
+def get_generated_timelines(name: str):
+    """Get the generated timeline.
+    
+    :param name: The name of the timeline.
+    :return: The generated timeline.
+    Exceptions:
+        - 404: If the timeline does not exist.
+    """
+    timeline_path = os.path.join(timeline_basedir, name)
+    generate_path = os.path.join(timeline_path, "generate")
+    # Check if the timeline exists
+    if not os.path.exists(generate_path):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+    # Read properties of all generated timelines
+    generated_timelines = []
+    for generate_dir in os.listdir(generate_path):
+        generate_dir_path = os.path.join(generate_path, generate_dir)
+        if os.path.isdir(generate_dir_path):
+            properties_file = os.path.join(generate_dir_path, "generate.json")
+            if os.path.exists(properties_file):
+                with open(properties_file, "r") as f:
+                    properties = DscaperGenerate.model_validate_json(f.read())
+                    generated_timelines.append(properties)
+    # Return the list of generated timelines
+    return generated_timelines
+
+
+def get_generated_timeline_by_id(name: str, generate_id: str):
+    """Get a specific generated timeline by ID.
+    
+    :param name: The name of the timeline.
+    :param generate_id: The ID of the generated timeline.
+    :return: The generated timeline properties.
+    Exceptions:
+        - 404: If the timeline or generated timeline does not exist.
+    """
+    timeline_path = os.path.join(timeline_basedir, name)
+    generate_dir = os.path.join(timeline_path, "generate", generate_id)
+    # Check if the timeline exists
+    if not os.path.exists(generate_dir):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' or generated timeline with ID '{generate_id}' does not exist.")
+    properties_file = os.path.join(generate_dir, "generate.json")
+    if not os.path.exists(properties_file):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Generated timeline with ID '{generate_id}' does not exist.")
+    with open(properties_file, "r") as f:
+        properties = DscaperGenerate.model_validate_json(f.read())
+    return properties
+
+
+def get_generated_file(name: str, generate_id: str, file_name: str):
+    """Get a specific generated file from the timeline.
+    
+    :param name: The name of the timeline.
+    :param generate_id: The ID of the generated timeline.
+    :param file_name: The name of the generated file.
+    :return: The generated file content or an error response if not found.
+    Exceptions:
+        - 404: If the timeline or generated file does not exist.
+    """
+    timeline_path = os.path.join(timeline_basedir, name)
+    generate_dir = os.path.join(timeline_path, "generate", generate_id)
+    # Check if the timeline exists
+    if not os.path.exists(generate_dir):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' or generated timeline with ID '{generate_id}' does not exist.")
+    file_path = os.path.join(generate_dir, file_name)
+    if not os.path.exists(file_path):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Generated file '{file_name}' does not exist.")
+    # requesting metadata
+    base, ext = os.path.splitext(file_name)
+    if ext.lower() == ".json" or ext.lower() == ".jams":
+        # If the file is a JSON or TXT file, read it as metadata
+        with open(file_path, "r") as f:
+            data_json = f.read()
+        return Response(content=data_json, media_type="application/json")
+    # requesting audio file
+    elif ext.lower() in [".wav", ".mp3", ".flac", ".ogg"]:
+        with open(file_path, "rb") as f:
+            audio_data = f.read()
+        return Response(content=audio_data, media_type="audio/" + ext[1:])
+    elif ext.lower() == ".txt":
+        # If the file is a TXT file, read it as text content
+        with open(file_path, "r") as f:
+            text_content = f.read()
+        return Response(content=text_content, media_type="text/plain")
+    # Return bad request for unsupported formats
+    else:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Unsupported file format")
+
+
+
+# Helper functions to convert distributions
+# to tuples for scaper compatibility
 
 def get_distribution_tuple(distribution):
     """Convert a distribution list to a tuple."""

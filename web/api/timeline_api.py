@@ -30,9 +30,56 @@ async def add_event_to_timeline(name: str, properties: DscaperEvent):
     """
     return timeline_service.add_event(name, properties)
 
+
 @api_router.post("/{name}/generate")
 async def generate_timeline(name: str, properties: DscaperGenerate):
     """Generate the timeline.
     :return: A response indicating the timeline was generated.
     """
     return timeline_service.generate_timeline(name, properties)
+
+
+@api_router.get("/")
+async def list_timelines():
+    """List all timelines.
+    :return: A list of timelines.
+    """
+    return timeline_service.list_timelines()
+
+
+@api_router.get("/{name}/background")
+async def list_backgrounds(name: str):
+    """List all backgrounds in the timeline.
+    :return: A list of backgrounds.
+    """
+    return timeline_service.list_backgrounds(name)
+
+
+@api_router.get("/{name}/event")
+async def list_events(name: str):
+    """List all events in the timeline.
+    :return: A list of events.
+    """
+    return timeline_service.list_events(name)
+
+
+@api_router.get("/{name}/generate")
+async def get_generated_timeline(name: str):
+    """Get the generated timeline.
+    :return: The generated timeline.
+    """
+    return timeline_service.get_generated_timelines(name)
+
+@api_router.get("/{name}/generate/{generate_id}")
+async def get_generated_timeline_by_id(name: str, generate_id: str):
+    """Get the generated timeline by ID.
+    :return: The generated timeline.
+    """
+    return timeline_service.get_generated_timeline_by_id(name, generate_id)
+
+@api_router.get("/{name}/generate/{generate_id}/{file_name}")
+async def get_generated_file(name: str, generate_id: str, file_name: str):
+    """Get a generated file by name.
+    :return: The generated file.
+    """
+    return timeline_service.get_generated_file(name, generate_id, file_name)
