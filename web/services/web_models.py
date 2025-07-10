@@ -5,7 +5,6 @@ class AudioMetadataSaveDTO(BaseModel):
     library: str
     label: str
     filename: str
-    foreground: bool = True
     sandbox: str = "{}"  # JSON string
 
 class AudioMetadata(BaseModel):
@@ -13,25 +12,20 @@ class AudioMetadata(BaseModel):
     library: str
     label: str
     filename: str
-    foreground: bool
     sandbox: str # JSON string
     timestamp: int # set by the server
     duration: float # set by the server
 
 class TimelineCreateDTO(BaseModel):
     duration: float = 0 
-    seed: int = 0
     description: str = ""
-    ref_db: int = -20
     sandbox: str = "{}"  # JSON string
 
 class DscaperTimeline(BaseModel):
     id: str # set by the server
     name: str 
     duration: float = 0  
-    seed: int = 0
     description: str = ""
-    ref_db: int = -20
     sandbox: str = "{}"  # JSON string
     timestamp: int # set by the server
 
@@ -55,3 +49,11 @@ class DscaperEvent(BaseModel):
     event_type: str | None = None
     id: str | None = None # set by the server
 
+class DscaperGenerate(BaseModel):
+    seed: int = 0
+    ref_db: int = -20
+    reverb: float = 0.0
+    save_isolated_events: bool = False
+    save_isolated_eventtypes: bool = False
+    id: str | None = None # set by the server
+    timestamp: int = 0 # set by the server

@@ -33,7 +33,6 @@ async def add_audio(library: str,
         library=library,
         label=label,
         filename=filename,
-        foreground=foreground,
         sandbox=sandbox
     )
 
@@ -58,7 +57,6 @@ async def update_audio(library: str,
         library=library,
         label=label,
         filename=filename,
-        foreground=foreground,
         sandbox=sandbox
     )
 

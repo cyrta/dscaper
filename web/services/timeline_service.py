@@ -1,10 +1,12 @@
-from web.services.web_models import TimelineCreateDTO, DscaperTimeline, DscaperBackground, DscaperEvent
+from web.services.web_models import TimelineCreateDTO, DscaperTimeline, DscaperBackground, DscaperEvent, DscaperGenerate
 from fastapi import APIRouter, Response, status
 import os
 import uuid
 import time
+import scaper
 
 timeline_basedir = os.path.join(os.getcwd(), "data", "timeline")
+library_basedir = os.path.join(os.getcwd(), "data", "audio")
 
 
 def create_timeline(name: str, properties: TimelineCreateDTO):
@@ -29,9 +31,7 @@ def create_timeline(name: str, properties: TimelineCreateDTO):
         id=file_id,
         name=name,
         duration=p.duration,
-        seed=p.seed,
         description=p.description,
-        ref_db=p.ref_db,
         sandbox=p.sandbox,
         timestamp=timestamp
     )
@@ -114,3 +114,146 @@ def add_event(name: str, properties: DscaperEvent):
         f.write(event.model_dump_json())
     # Return a response indicating success
     return event
+
+
+def generate_timeline(name: str, properties: DscaperGenerate):
+    """Generate the timeline.
+    
+    :param name: The name of the timeline.
+    :param properties: Properties for the generation.
+    :return: A response indicating the timeline was generated.
+    Exceptions:
+        - 404: If the timeline does not exist.
+    """
+    timeline_path = os.path.join(timeline_basedir, name)
+    timeline_config = os.path.join(timeline_path, "timeline.json")
+    # Check if the timeline exists
+    if not os.path.exists(timeline_config):
+        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+    # Create the generate directory if it does not exist
+    generate_base = os.path.join(timeline_path, "generate")
+    os.makedirs(generate_base, exist_ok=True)
+    # Load the timeline configuration
+    with open(timeline_config, "r") as f:
+        timeline = DscaperTimeline.model_validate_json(f.read())
+    # Save the generation properties
+    generate_id = str(uuid.uuid4())
+    generate_dir = os.path.join(generate_base, generate_id)
+    os.makedirs(generate_dir, exist_ok=True)
+    properties.id = generate_id
+    properties.timestamp = int(time.time())
+    properties_file = os.path.join(generate_dir, "generate.json")
+    with open(properties_file, "w") as f:
+        f.write(properties.model_dump_json())
+    # Use scaper to generate the timeline
+    sc = scaper.Scaper(
+        duration=timeline.duration,
+        fg_path=None,  # fg_path is not used in this context
+        bg_path=None,  # bg_path is not used in this context
+        random_state=properties.seed
+    )
+    # add backgrounds
+    for bg in os.listdir(os.path.join(timeline_path, "background")):
+        print(f"*** Processing background: {bg}")
+        bg_file = os.path.join(timeline_path, "background", bg)
+        if os.path.isfile(bg_file):
+            with open(bg_file, "r") as f:
+                background = DscaperBackground.model_validate_json(f.read())
+            sc.add_background(
+                label=get_distribution_tuple(background.label),
+                source_file=get_distribution_tuple(background.source_file),
+                source_time=get_distribution_tuple(background.source_time),
+                library=os.path.join(library_basedir, background.library) if background.library else None
+            )
+    # add events
+    for event in os.listdir(os.path.join(timeline_path, "events")):
+        print(f"*** Processing event: {event}")
+        event_file = os.path.join(timeline_path, "events", event)
+        if os.path.isfile(event_file):
+            with open(event_file, "r") as f:
+                event_data = DscaperEvent.model_validate_json(f.read())
+            sc.add_event(
+                label=get_distribution_tuple(event_data.label),
+                source_file=get_distribution_tuple(event_data.source_file),
+                source_time=get_distribution_tuple(event_data.source_time),
+                event_time=get_distribution_tuple(event_data.event_time),
+                event_duration=get_distribution_tuple(event_data.event_duration),
+                snr=get_distribution_tuple(event_data.snr),
+                pitch_shift=get_distribution_tuple(event_data.pitch_shift) if event_data.pitch_shift else None,
+                time_stretch=get_distribution_tuple(event_data.time_stretch) if event_data.time_stretch else None,
+                event_type=event_data.event_type,
+                library=os.path.join(library_basedir, event_data.library) if event_data.library else None
+            )
+    # Generate the timeline
+    audiofile = os.path.join(generate_dir, "soundscape.wav")
+    jamsfile = os.path.join(generate_dir, "soundscape.jams")
+    txtfile = os.path.join(generate_dir, "soundscape.txt")
+    sc.generate(
+        audio_path=audiofile,
+        jams_path=jamsfile,
+        allow_repeated_label=True,
+        allow_repeated_source=True,
+        reverb=properties.reverb,
+        disable_sox_warnings=True,
+        no_audio=False,
+        txt_path=txtfile,
+        save_isolated_events=properties.save_isolated_events,
+        save_isolated_eventtypes=properties.save_isolated_eventtypes
+    )
+    return Response(status_code=status.HTTP_200_OK, content=f"Timeline '{name}' generated successfully.")
+
+
+def get_distribution_tuple(distribution):
+    """Convert a distribution list to a tuple."""
+    print(f"*** Processing distribution: {distribution}")
+    if not isinstance(distribution, list):
+        raise ValueError("Distribution must be a list or string.")
+        return None
+    dist_type = distribution[0]
+    if dist_type == 'const':
+        if len(distribution) != 2:
+            raise ValueError("Constant distribution must have exactly one value.")
+        value = distribution[1]
+        return_tuple = (dist_type, value)
+        # check if value is a number or a string
+        if isinstance(value, str):
+            if value.isnumeric():
+                return_tuple = (dist_type, float(value))
+            else:
+                return_tuple = (dist_type, value)
+        else:
+            raise ValueError("Constant distribution value must be a number or a string.")
+        print(f"*** Returning constant distribution tuple: {return_tuple}")
+        return return_tuple
+    elif dist_type == 'choose':
+        if len(distribution) != 2:
+            raise ValueError("Choose distribution must have exactly one list of values.")
+        return (dist_type, string_to_list(distribution[1]))
+    elif dist_type == 'choose_weighted':    
+        if len(distribution) != 3:
+            raise ValueError("Choose weighted distribution must have exactly one list of values and one list of weights.")
+        return (dist_type, string_to_list(distribution[1]), string_to_list(distribution[2]))
+    elif dist_type == 'uniform':
+        if len(distribution) != 3:
+            raise ValueError("Uniform distribution must have exactly two values (min, max).")
+        return (dist_type, float(distribution[1]), float(distribution[2]))
+    elif dist_type == 'truncnorm':
+        if len(distribution) != 5:
+            raise ValueError("Truncated normal distribution must have exactly four values (mean, std, a, b).")
+        return (dist_type, float(distribution[1]), float(distribution[2]), float(distribution[3]), float(distribution[4]))
+    elif dist_type == 'normal':
+        if len(distribution) != 3:
+            raise ValueError("Normal distribution must have exactly two values (mean, std).")
+        return (dist_type, float(distribution[1]), float(distribution[2]))
+    else:
+        raise ValueError("Invalid distribution format. Must be a list or string.")
+    
+def string_to_list(string):
+    """Convert a string to a list."""
+    if not isinstance(string, str):
+        raise ValueError("Input must be a string.")
+    # remove brackets
+    string = string.strip().strip('[]')
+    output_list = [s.strip() for s in string.split(',') if s.strip()]
+    print(f"*** Converting string to list: {string} to {output_list}")
+    return output_list

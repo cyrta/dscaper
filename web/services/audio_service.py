@@ -45,7 +45,7 @@ def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, 
     # create the metadata object
     file_id = str(uuid.uuid4())
     timestamp = int(time.time())
-    metadata_obj = AudioMetadata(id=file_id, library=m.library, label=m.label, filename=m.filename, foreground=m.foreground, 
+    metadata_obj = AudioMetadata(id=file_id, library=m.library, label=m.label, filename=m.filename,  
                              sandbox=m.sandbox, timestamp=timestamp, duration=duration)
     # save the metadata to the audio metadata path
     with open(metadata_destination, "w") as f:
