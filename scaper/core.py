@@ -1462,6 +1462,7 @@ class Scaper(object):
     def _instantiate_event(self, event, isbackground=False,
                            allow_repeated_label=True,
                            allow_repeated_source=True,
+                           allowed_labels=[],
                            used_labels=[],
                            used_source_files=[],
                            disable_instantiation_warnings=False):
@@ -1517,14 +1518,17 @@ class Scaper(object):
             to select.
 
         '''
-        # set paths and labels depending on whether its a foreground/background
-        # event
-        if isbackground:
-            file_path = self.bg_path
-            allowed_labels = self.bg_labels
+        # print("Instantiating event: ", event)
+
+        if event.library is None:
+            if isbackground:
+                file_path = self.bg_path
+            else:
+                file_path = self.fg_path
         else:
-            file_path = self.fg_path
-            allowed_labels = self.fg_labels
+            file_path = event.library
+
+        # print("File path: ", file_path)
 
         # determine label
         # special case: choose tuple with empty list
@@ -1818,17 +1822,54 @@ class Scaper(object):
         # INSTANTIATE BACKGROUND AND FOREGROUND EVENTS AND ADD TO ANNOTATION
         # NOTE: logic for instantiating bg and fg events is NOT the same.
 
+        # Get the set of libraries used in the background and foreground
+        background_libraries = set(
+            [event.library for event in self.bg_spec if event.library is not None])
+        foreground_libraries = set(
+            [event.library for event in self.fg_spec if event.library is not None])
+        
+        # get the labels for each library
+        bg_labels_available = {"default": self.bg_labels}
+        fg_labels_available = {"default": self.fg_labels}
+        bg_labels_used = {"default": []}
+        fg_labels_used = {"default": []}
+        bg_files_used = {"default": []}
+        fg_files_used = {"default": []}
+        
+        for library in background_libraries:
+            labels = []
+            for root, dirs, files in os.walk(library):
+                if root == library:
+                    labels.extend(dirs)
+            bg_labels_available[library] = labels
+            bg_labels_used[library] = []
+            bg_files_used[library] = []
+        for library in foreground_libraries:
+            labels = []
+            for root, dirs, files in os.walk(library):
+                if root == library:
+                    labels.extend(dirs)
+            fg_labels_available[library] = labels
+            fg_labels_used[library] = []
+            fg_files_used[library] = []
+        
+        # Print the labels for each library
+        # for library, labels in bg_labels_available.items():
+        #     print(f"Background library {library} labels: {labels}")
+        # for library, labels in fg_labels_available.items():
+        #     print(f"Foreground library {library} labels: {labels}")
+
         # Add background sounds
-        bg_labels = []
-        bg_source_files = []
         for event in self.bg_spec:
+            library = event.library if event.library is not None else "default"
             value = self._instantiate_event(
                 event,
                 isbackground=True,
                 allow_repeated_label=allow_repeated_label,
                 allow_repeated_source=allow_repeated_source,
-                used_labels=bg_labels,
-                used_source_files=bg_source_files,
+                allowed_labels=bg_labels_available[library],
+                used_labels=bg_labels_used[library],
+                used_source_files=bg_files_used[library],
                 disable_instantiation_warnings=disable_instantiation_warnings)
 
             # Note: add_background doesn't allow to set a time_stretch, i.e.
@@ -1840,16 +1881,16 @@ class Scaper(object):
                        confidence=1.0)
 
         # Add foreground events
-        fg_labels = []
-        fg_source_files = []
         for event in self.fg_spec:
+            library = event.library if event.library is not None else "default"
             value = self._instantiate_event(
                 event,
                 isbackground=False,
                 allow_repeated_label=allow_repeated_label,
                 allow_repeated_source=allow_repeated_source,
-                used_labels=fg_labels,
-                used_source_files=fg_source_files,
+                allowed_labels=fg_labels_available[library],
+                used_labels=fg_labels_available[library],
+                used_source_files=fg_files_used[library],
                 disable_instantiation_warnings=disable_instantiation_warnings)
 
             if value.time_stretch is not None:

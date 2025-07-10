@@ -1408,6 +1408,7 @@ def test_scaper_instantiate_event():
     for _ in range(20):
         instantiated_event = sc._instantiate_event(
             fg_event8, isbackground=False, allow_repeated_label=False,
+            allowed_labels=['siren', 'human_voice', 'car_horn'],
             allow_repeated_source=True, used_labels=['siren', 'human_voice'],
             disable_instantiation_warnings=True)
         assert instantiated_event.label == 'car_horn'
