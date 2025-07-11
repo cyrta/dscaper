@@ -6,6 +6,7 @@ import uuid
 import os
 import time
 import soundfile
+import json
 
 
 DEFAULT_LIB_BASE_PATH = os.path.join(os.getcwd(), "data")
@@ -129,7 +130,7 @@ class Dscaper:
         for root, dirs, files in os.walk(self.library_basedir):
             if root == self.library_basedir:
                 libraries.extend(dirs)
-        return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=str(libraries), media_type="application/json")
+        return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=json.dumps(libraries), media_type="application/json")
 
 
     def get_filenames(self, library: str, label: str) -> DscaperApiResponse:
@@ -150,7 +151,7 @@ class Dscaper:
         for file in os.listdir(library_path):
             if os.path.isfile(os.path.join(library_path, file)):
                 filenames.append(file)
-        return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=str(filenames), media_type="application/json")
+        return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=json.dumps(filenames), media_type="application/json")
 
 
     def get_labels(self, library: str) -> DscaperApiResponse:
@@ -167,7 +168,7 @@ class Dscaper:
         for root, dirs, files in os.walk(library_path):
             if root == library_path:
                 labels.extend(dirs)
-        return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=str(labels), media_type="application/json")
+        return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=json.dumps(labels), media_type="application/json")
 
 
     def create_timeline(self, name: str, properties: TimelineCreateDTO) -> DscaperApiResponse:

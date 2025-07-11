@@ -1,10 +1,12 @@
 from fastapi import APIRouter, File, Form
 from typing import Annotated
-from web.services.web_models import AudioMetadataSaveDTO, DscaperWebResponse
-import web.services.audio_service as audio_service
+from scaper.dscaper_datatypes import AudioMetadataSaveDTO, DscaperWebResponse
+from scaper import dscaper
 
 url_prefix = '/api/v1/audio'
 api_router = APIRouter(prefix=url_prefix)
+
+audio_service = dscaper.Dscaper()
 
 
 @api_router.post("/{library}/{label}/{filename}")

@@ -1,9 +1,10 @@
 from fastapi import APIRouter
-from web.services.web_models import TimelineCreateDTO, DscaperBackground, DscaperEvent, DscaperGenerate, DscaperWebResponse
-import web.services.timeline_service as timeline_service
+from scaper.dscaper_datatypes import TimelineCreateDTO, DscaperBackground, DscaperEvent, DscaperGenerate, DscaperWebResponse
+from scaper import dscaper
 
 url_prefix = '/api/v1/timeline'
 api_router = APIRouter(prefix=url_prefix)
+timeline_service = dscaper.Dscaper()
 
 
 @api_router.post("/{name}")
