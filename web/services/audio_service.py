@@ -1,4 +1,4 @@
-from web.services.web_models import AudioMetadata, AudioMetadataSaveDTO
+from web.services.web_models import AudioMetadata, AudioMetadataSaveDTO, DscaperApiResponse
 from typing import Annotated
 from fastapi import File, Response, status
 import uuid
@@ -9,7 +9,7 @@ import soundfile
 audio_path = os.path.join(os.getcwd(), "data", "audio")
 
 
-def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, update: bool = False):
+def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, update: bool = False) -> DscaperApiResponse:
     """
     Store audio file and its metadata.
     
@@ -20,7 +20,7 @@ def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, 
     m = metadata
     # check if file is empty
     if len(file) == 0:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="File is empty")
+        return DscaperApiResponse(status="error",status_code=status.HTTP_400_BAD_REQUEST,content="File is empty")
     # filename and path
     file_path = os.path.join(audio_path, m.library, m.label)
     audio_destination = os.path.join(file_path, m.filename)
@@ -28,9 +28,9 @@ def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, 
     metadata_destination = os.path.join(file_path, base + ".json")
     # check if the file already exists
     if os.path.exists(audio_destination) and not update:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content=f"File already exists in. Use PUT to update it.")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content="File already exists. Use PUT to update it.")
     elif not os.path.exists(audio_destination) and update:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content=f"File does not exist. Use POST to create it.")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content="File does not exist. Use POST to create it.")
     # create the directory if it does not exist
     os.makedirs(file_path, exist_ok=True)
     # save the file to the audio path
@@ -42,7 +42,7 @@ def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, 
     except RuntimeError as e:
         # delete the file if it is not valid
         os.remove(audio_destination)
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content=f"Invalid audio file: {str(e)}")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content=f"Invalid audio file: {str(e)}",)
     # create the metadata object
     file_id = str(uuid.uuid4())
     timestamp = int(time.time())
@@ -52,10 +52,10 @@ def store_audio(file: Annotated[bytes, File()], metadata: AudioMetadataSaveDTO, 
     with open(metadata_destination, "w") as f:
         f.write(metadata_obj.model_dump_json())
     # return the metadata object
-    return metadata_obj
+    return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=metadata_obj.model_dump_json(), media_type="application/json")
 
 
-def read_audio(library: str, label: str, filename: str):
+def read_audio(library: str, label: str, filename: str) -> DscaperApiResponse:
     """
     Read audio file (metadata or audio)
     
@@ -69,23 +69,23 @@ def read_audio(library: str, label: str, filename: str):
     """
     file = os.path.join(audio_path, library, label, filename)
     if not os.path.exists(file):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content="Audio file not found")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_404_NOT_FOUND, content="Audio file not found")
     base, ext = os.path.splitext(filename)
     # requesting metadata
     if ext.lower() == ".json":
         with open(file, "r") as f:
             metadata_json = f.read()
-        return AudioMetadata.model_validate_json(metadata_json)  # Use model_validate_json to parse JSON into AudioMetadata
+        return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=AudioMetadata.model_validate_json(metadata_json).model_dump_json(), media_type="application/json")
     # requesting audio file
     elif ext.lower() in [".wav", ".mp3", ".flac", ".ogg"]:
         with open(file, "rb") as f:
             audio_data = f.read()
-        return Response(content=audio_data, media_type="audio/" + ext[1:])
+        return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=audio_data, media_type="audio/" + ext[1:])
     else:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Unsupported audio file format")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content="Unsupported audio file format")
     
 
-def get_libraries():
+def get_libraries() -> DscaperApiResponse:
     """
     Get a list of all audio libraries.
     
@@ -95,10 +95,10 @@ def get_libraries():
     for root, dirs, files in os.walk(audio_path):
         if root == audio_path:
             libraries.extend(dirs)
-    return libraries
+    return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=str(libraries), media_type="application/json")
 
 
-def get_filenames(library: str, label: str):
+def get_filenames(library: str, label: str) -> DscaperApiResponse:
     """
     Get a list of all filenames in a specific audio label.
     
@@ -110,16 +110,16 @@ def get_filenames(library: str, label: str):
     """
     library_path = os.path.join(audio_path, library, label)
     if not os.path.exists(library_path):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content="Library or label not found")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_404_NOT_FOUND, content="Library or label not found")
     
     filenames = []
     for file in os.listdir(library_path):
         if os.path.isfile(os.path.join(library_path, file)):
             filenames.append(file)
-    return filenames
+    return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=str(filenames), media_type="application/json")
 
 
-def get_labels(library: str):
+def get_labels(library: str) -> DscaperApiResponse:
     """
     Get a list of all labels in a specific audio library.
     
@@ -128,10 +128,9 @@ def get_labels(library: str):
     """
     library_path = os.path.join(audio_path, library)
     if not os.path.exists(library_path):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content="Library not found")
-    
+        return DscaperApiResponse(status="error", status_code=status.HTTP_404_NOT_FOUND, content="Library not found")    
     labels = []
     for root, dirs, files in os.walk(library_path):
         if root == library_path:
             labels.extend(dirs)
-    return labels
+    return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=str(labels), media_type="application/json")

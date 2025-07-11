@@ -1,4 +1,7 @@
 from pydantic import BaseModel
+from typing import Any
+from fastapi import Response
+
 
 
 class AudioMetadataSaveDTO(BaseModel):
@@ -58,3 +61,20 @@ class DscaperGenerate(BaseModel):
     id: str | None = None # set by the server
     timestamp: int = 0 # set by the server
     generated_files: list[str] = []  # List of generated audio files, set by the server
+
+class DscaperApiResponse(BaseModel):
+    status: str
+    status_code: int
+    content: Any | None = None  # Optional response message
+    media_type: str | None = "text/plain"  # Optional type field for response categorization
+
+class DscaperWebResponse(Response):
+    def __init__(self, api_response: DscaperApiResponse):
+        super().__init__(
+            content=api_response.content,
+            status_code=api_response.status_code,
+            media_type=api_response.media_type
+        )
+
+
+      
