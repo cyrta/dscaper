@@ -1,4 +1,4 @@
-from web.services.web_models import TimelineCreateDTO, DscaperTimeline, DscaperBackground, DscaperEvent, DscaperGenerate
+from web.services.web_models import TimelineCreateDTO, DscaperTimeline, DscaperBackground, DscaperEvent, DscaperGenerate, DscaperApiResponse
 from fastapi import APIRouter, Response, status
 import os
 import uuid
@@ -9,7 +9,7 @@ timeline_basedir = os.path.join(os.getcwd(), "data", "timeline")
 library_basedir = os.path.join(os.getcwd(), "data", "audio")
 
 
-def create_timeline(name: str, properties: TimelineCreateDTO):
+def create_timeline(name: str, properties: TimelineCreateDTO) -> DscaperApiResponse:
     """Create a new timeline.
     
     :param name: The name of the timeline.
@@ -20,7 +20,7 @@ def create_timeline(name: str, properties: TimelineCreateDTO):
     timeline_config = os.path.join(timeline_path, "timeline.json")
     # Check if the timeline already exists
     if os.path.exists(timeline_config):
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content=f"Timeline '{name}' already exists.")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content=f"Timeline '{name}' already exists.")
     # Create the directory if it does not exist
     os.makedirs(timeline_path, exist_ok=True)
     # Create the Timeline object
@@ -39,10 +39,10 @@ def create_timeline(name: str, properties: TimelineCreateDTO):
     with open(timeline_config, "w") as f:
         f.write(timeline.model_dump_json())
     # Return the created timeline object
-    return timeline
+    return DscaperApiResponse(status="success",status_code=status.HTTP_201_CREATED,content=timeline.model_dump_json(),media_type="application/json")
     
 
-def add_background(name: str, properties: DscaperBackground):
+def add_background(name: str, properties: DscaperBackground) -> DscaperApiResponse:
     """Add a background to the timeline.
     
     :param name: The name of the timeline.
@@ -55,7 +55,7 @@ def add_background(name: str, properties: DscaperBackground):
     timeline_config = os.path.join(timeline_path, "timeline.json")
     # Check if the timeline exists
     if not os.path.exists(timeline_config):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
     # Create the background directory if it does not exist
     background_path = os.path.join(timeline_path, "background")
     os.makedirs(background_path, exist_ok=True)
@@ -73,10 +73,10 @@ def add_background(name: str, properties: DscaperBackground):
     with open(background_file, "w") as f:
         f.write(background.model_dump_json())
     # Return a response indicating success
-    return background
+    return DscaperApiResponse(status="success", status_code=status.HTTP_201_CREATED, content=background.model_dump_json(), media_type="application/json")
 
 
-def add_event(name: str, properties: DscaperEvent):
+def add_event(name: str, properties: DscaperEvent) -> DscaperApiResponse:
     """Add an event to the timeline.
     
     :param name: The name of the timeline.
@@ -89,7 +89,7 @@ def add_event(name: str, properties: DscaperEvent):
     timeline_config = os.path.join(timeline_path, "timeline.json")
     # Check if the timeline exists
     if not os.path.exists(timeline_config):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
     # Create the events directory if it does not exist
     events_path = os.path.join(timeline_path, "events")
     os.makedirs(events_path, exist_ok=True)
@@ -113,10 +113,10 @@ def add_event(name: str, properties: DscaperEvent):
     with open(event_file, "w") as f:
         f.write(event.model_dump_json())
     # Return a response indicating success
-    return event
+    return DscaperApiResponse(status="success", status_code=status.HTTP_201_CREATED, content=event.model_dump_json(), media_type="application/json")
 
 
-def generate_timeline(name: str, properties: DscaperGenerate):
+def generate_timeline(name: str, properties: DscaperGenerate) -> DscaperApiResponse:
     """Generate the timeline.
     
     :param name: The name of the timeline.
@@ -129,7 +129,7 @@ def generate_timeline(name: str, properties: DscaperGenerate):
     timeline_config = os.path.join(timeline_path, "timeline.json")
     # Check if the timeline exists
     if not os.path.exists(timeline_config):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+        return DscaperApiResponse(status="error", status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
     # Create the generate directory if it does not exist
     generate_base = os.path.join(timeline_path, "generate")
     os.makedirs(generate_base, exist_ok=True)
@@ -206,10 +206,15 @@ def generate_timeline(name: str, properties: DscaperGenerate):
     properties_file = os.path.join(generate_dir, "generate.json")
     with open(properties_file, "w") as f:
         f.write(properties.model_dump_json())
-    return properties
+    return DscaperApiResponse(
+        status="success",
+        status_code=status.HTTP_201_CREATED,
+        content=properties.model_dump_json(),
+        media_type="application/json"
+    )
 
 
-def list_timelines():
+def list_timelines() -> DscaperApiResponse:
     """List all timelines.
 
     :return: A list of timelines.
@@ -223,10 +228,15 @@ def list_timelines():
                     with open(timeline_path, "r") as f:
                         timeline = DscaperTimeline.model_validate_json(f.read())
                         timelines.append(timeline)
-    return timelines
+    return DscaperApiResponse(
+        status="success",
+        status_code=status.HTTP_200_OK,
+        content=str([timeline.model_dump_json() for timeline in timelines]),
+        media_type="application/json"
+    )
 
 
-def list_backgrounds(name: str):
+def list_backgrounds(name: str) -> DscaperApiResponse:
     """List all backgrounds in the timeline.
     
     :param name: The name of the timeline.
@@ -238,7 +248,11 @@ def list_backgrounds(name: str):
     background_path = os.path.join(timeline_path, "background")
     # Check if the timeline exists
     if not os.path.exists(background_path):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+        return DscaperApiResponse(
+            status="error",
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=f"Timeline '{name}' does not exist."
+        )
     backgrounds = []
     for bg_file in os.listdir(background_path):
         bg_file_path = os.path.join(background_path, bg_file)
@@ -246,10 +260,15 @@ def list_backgrounds(name: str):
             with open(bg_file_path, "r") as f:
                 background = DscaperBackground.model_validate_json(f.read())
                 backgrounds.append(background)
-    return backgrounds
+    return DscaperApiResponse(
+        status="success",
+        status_code=status.HTTP_200_OK,
+        content=str([bg.model_dump_json() for bg in backgrounds]),
+        media_type="application/json"
+    )
 
 
-def list_events(name: str):
+def list_events(name: str) -> DscaperApiResponse:
     """List all events in the timeline.
     
     :param name: The name of the timeline.
@@ -261,7 +280,11 @@ def list_events(name: str):
     events_path = os.path.join(timeline_path, "events")
     # Check if the timeline exists
     if not os.path.exists(events_path):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+        return DscaperApiResponse(
+            status="error",
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=f"Timeline '{name}' does not exist."
+        )
     events = []
     for event_file in os.listdir(events_path):
         event_file_path = os.path.join(events_path, event_file)
@@ -269,10 +292,15 @@ def list_events(name: str):
             with open(event_file_path, "r") as f:
                 event = DscaperEvent.model_validate_json(f.read())
                 events.append(event)
-    return events
+    return DscaperApiResponse(
+        status="success",
+        status_code=status.HTTP_200_OK,
+        content=str([event.model_dump_json() for event in events]),
+        media_type="application/json"
+    )
 
 
-def get_generated_timelines(name: str):
+def get_generated_timelines(name: str) -> DscaperApiResponse:
     """Get the generated timeline.
     
     :param name: The name of the timeline.
@@ -284,7 +312,11 @@ def get_generated_timelines(name: str):
     generate_path = os.path.join(timeline_path, "generate")
     # Check if the timeline exists
     if not os.path.exists(generate_path):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' does not exist.")
+        return DscaperApiResponse(
+            status="error",
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=f"Timeline '{name}' does not exist."
+        )
     # Read properties of all generated timelines
     generated_timelines = []
     for generate_dir in os.listdir(generate_path):
@@ -296,10 +328,15 @@ def get_generated_timelines(name: str):
                     properties = DscaperGenerate.model_validate_json(f.read())
                     generated_timelines.append(properties)
     # Return the list of generated timelines
-    return generated_timelines
+    return DscaperApiResponse(
+        status="success",
+        status_code=status.HTTP_200_OK,
+        content=str([timeline.model_dump_json() for timeline in generated_timelines]),
+        media_type="application/json"
+    )
 
 
-def get_generated_timeline_by_id(name: str, generate_id: str):
+def get_generated_timeline_by_id(name: str, generate_id: str) -> DscaperApiResponse:
     """Get a specific generated timeline by ID.
     
     :param name: The name of the timeline.
@@ -312,16 +349,29 @@ def get_generated_timeline_by_id(name: str, generate_id: str):
     generate_dir = os.path.join(timeline_path, "generate", generate_id)
     # Check if the timeline exists
     if not os.path.exists(generate_dir):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' or generated timeline with ID '{generate_id}' does not exist.")
+        return DscaperApiResponse(
+            status="error",
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=f"Timeline '{name}' or generated timeline with ID '{generate_id}' does not exist."
+        )
     properties_file = os.path.join(generate_dir, "generate.json")
     if not os.path.exists(properties_file):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Generated timeline with ID '{generate_id}' does not exist.")
+        return DscaperApiResponse(
+            status="error",
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=f"Generated timeline with ID '{generate_id}' does not exist."
+        )
     with open(properties_file, "r") as f:
         properties = DscaperGenerate.model_validate_json(f.read())
-    return properties
+    return DscaperApiResponse(
+        status="success",
+        status_code=status.HTTP_200_OK,
+        content=properties.model_dump_json(),
+        media_type="application/json"
+    )
 
 
-def get_generated_file(name: str, generate_id: str, file_name: str):
+def get_generated_file(name: str, generate_id: str, file_name: str) -> DscaperApiResponse:
     """Get a specific generated file from the timeline.
     
     :param name: The name of the timeline.
@@ -335,30 +385,57 @@ def get_generated_file(name: str, generate_id: str, file_name: str):
     generate_dir = os.path.join(timeline_path, "generate", generate_id)
     # Check if the timeline exists
     if not os.path.exists(generate_dir):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Timeline '{name}' or generated timeline with ID '{generate_id}' does not exist.")
+        return DscaperApiResponse(
+            status="error",
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=f"Timeline '{name}' or generated timeline with ID '{generate_id}' does not exist."
+        )
     file_path = os.path.join(generate_dir, file_name)
     if not os.path.exists(file_path):
-        return Response(status_code=status.HTTP_404_NOT_FOUND, content=f"Generated file '{file_name}' does not exist.")
+        return DscaperApiResponse(
+            status="error",
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=f"Generated file '{file_name}' does not exist in timeline '{name}' with ID '{generate_id}'."
+        )
     # requesting metadata
     base, ext = os.path.splitext(file_name)
     if ext.lower() == ".json" or ext.lower() == ".jams":
         # If the file is a JSON or TXT file, read it as metadata
         with open(file_path, "r") as f:
             data_json = f.read()
-        return Response(content=data_json, media_type="application/json")
+        return DscaperApiResponse(
+            status="success",
+            status_code=status.HTTP_200_OK,
+            content=data_json,
+            media_type="application/json"
+        )
     # requesting audio file
     elif ext.lower() in [".wav", ".mp3", ".flac", ".ogg"]:
         with open(file_path, "rb") as f:
             audio_data = f.read()
-        return Response(content=audio_data, media_type="audio/" + ext[1:])
+        return DscaperApiResponse(
+            status="success",
+            status_code=status.HTTP_200_OK,
+            content=audio_data,
+            media_type="audio/" + ext[1:]
+        )
     elif ext.lower() == ".txt":
         # If the file is a TXT file, read it as text content
         with open(file_path, "r") as f:
             text_content = f.read()
-        return Response(content=text_content, media_type="text/plain")
+        return DscaperApiResponse(
+            status="success",
+            status_code=status.HTTP_200_OK,
+            content=text_content,
+            media_type="text/plain"
+        )
     # Return bad request for unsupported formats
     else:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST, content="Unsupported file format")
+        return DscaperApiResponse(
+            status="error",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content="Unsupported file format"
+        )
 
 
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, Form, Response
+from fastapi import APIRouter, File, Form
 from typing import Annotated
 from web.services.web_models import AudioMetadataSaveDTO, DscaperWebResponse
 import web.services.audio_service as audio_service
