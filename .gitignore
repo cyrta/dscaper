@@ -11,5 +11,5 @@ scaper/bin/*
 .pytest_cache/*
 **/.DS_Store
 .venv/*
-data/audio/*
-data/timeline/*
+data/libraries/*
+data/timelines/*
