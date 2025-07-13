@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, Form
 from typing import Annotated
-from scaper.dscaper_datatypes import AudioMetadataSaveDTO, DscaperWebResponse
+from scaper.dscaper_datatypes import AudioMetadataSaveDTO, DscaperWebResponse, DscaperJsonResponse
 from scaper import dscaper
 
 url_prefix = '/api/v1/audio'

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Json
-from typing import Any
+from typing import Any, Union
 from fastapi import Response
+import json
 
 
 
@@ -32,12 +33,18 @@ class DscaperTimeline(BaseModel):
     sandbox: str = "{}"  # JSON string
     timestamp: int # set by the server
 
+class DscaperTimelines(BaseModel):
+    timelines: list[DscaperTimeline] = []
+   
 class DscaperBackground(BaseModel):
     library: str
     label: list[str] = ['choose', '[]']
     source_file: list[str] = ['choose', '[]']
     source_time: list[str] = ['const', '0']
     id: str | None = None # set by the server
+
+class DscaperBackgrounds(BaseModel):
+    backgrounds: list[DscaperBackground] = []
 
 class DscaperEvent(BaseModel):
     library: str
@@ -52,6 +59,9 @@ class DscaperEvent(BaseModel):
     event_type: str | None = None
     id: str | None = None # set by the server
 
+class DscaperEvents(BaseModel):
+    events: list[DscaperEvent] = []
+
 class DscaperGenerate(BaseModel):
     seed: int = 0
     ref_db: int = -20
@@ -61,6 +71,9 @@ class DscaperGenerate(BaseModel):
     id: str | None = None # set by the server
     timestamp: int = 0 # set by the server
     generated_files: list[str] = []  # List of generated audio files, set by the server
+
+class DscaperGenerations(BaseModel):
+    generations: list[DscaperGenerate] = []
 
 class DscaperApiResponse(BaseModel):
     status: str
@@ -75,9 +88,13 @@ class DscaperJsonResponse(BaseModel):
     media_type: str = "application/json"
 
 class DscaperWebResponse(Response):
-    def __init__(self, api_response: DscaperApiResponse):
+    def __init__(self, api_response: Union[DscaperJsonResponse, DscaperApiResponse]):
+        if api_response.media_type is "application/json":
+            content = json.dumps(api_response.content)
+        else:
+            content = api_response.content
         super().__init__(
-            content=api_response.content,
+            content=content,
             status_code=api_response.status_code,
             media_type=api_response.media_type
         )

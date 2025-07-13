@@ -161,11 +161,12 @@ def test_create_timeline_and_list_timelines(temp_lib_base):
     # Check if the timeline was created
     list_resp = d.list_timelines()
     assert list_resp.status == "success"
-    timelines = list_resp.content
-    assert isinstance(timelines, list)
-    assert len(timelines) > 0
+    timelines = DscaperTimelines.model_validate_json(json.dumps(list_resp.content))  
+    assert isinstance(timelines, DscaperTimelines)
+    assert len(timelines.timelines) > 0
     # get first timeline
-    timeline = DscaperTimeline.model_validate(json.loads(timelines[0]))
+    timeline = timelines.timelines[0]
+    assert isinstance(timeline, DscaperTimeline)
     assert timeline.name == "timeline1"
     assert timeline.duration == 10.0
     assert timeline.description == "desc"
@@ -203,12 +204,13 @@ def test_add_background_and_list_backgrounds(temp_lib_base):
     # list backgrounds
     list_resp = d.list_backgrounds("timeline1")
     assert list_resp.status == "success"
-    backgrounds = list_resp.content
-    assert isinstance(backgrounds, list)
-    assert len(backgrounds) > 0
-    bg_item = json.loads(backgrounds[0])
-    assert "id" in bg_item
-    assert bg_item["library"] == "my_lib"
+    backgrounds = DscaperBackgrounds.model_validate_json(json.dumps(list_resp.content))
+    assert isinstance(backgrounds, DscaperBackgrounds)
+    assert len(backgrounds.backgrounds) > 0
+    # Check if the first background has the expected properties
+    background = backgrounds.backgrounds[0]
+    assert isinstance(background, DscaperBackground)
+    assert background.library == "my_lib"
     # add background to a non-existing timeline
     resp2 = d.add_background("non-existing-timeline", bg)
     assert resp2.status == "error"
@@ -245,12 +247,15 @@ def test_add_event_and_list_events(temp_lib_base):
     # list events
     list_resp = d.list_events("timeline2")
     assert list_resp.status == "success"
-    events = list_resp.content
-    assert isinstance(events, list)
-    assert len(events) > 0
-    ev_item = json.loads(events[0])
-    assert "id" in ev_item
-    assert ev_item["library"] == "my_lib"
+    events = DscaperEvents.model_validate_json(json.dumps(list_resp.content))
+    assert isinstance(events, DscaperEvents)
+    assert len(events.events) > 0
+    # Check if the first event has the expected properties
+    event = events.events[0]
+    assert isinstance(event, DscaperEvent)
+    assert event.library == "my_lib"
+    assert "id" in event.model_dump()  # Check if ID is present
+    assert "event_type" in event.model_dump()  # Check if event_type is present
     # add event to a non-existing timeline
     resp2 = d.add_event("non-existing-timeline", ev)
     assert resp2.status == "error"
@@ -320,9 +325,9 @@ def test_generate_timeline(temp_lib_base):
     # get generated timelines
     gen_list_resp = d.get_generated_timelines("timeline3")
     assert gen_list_resp.status == "success"
-    generated_timelines = gen_list_resp.content
-    assert isinstance(generated_timelines, list)
-    assert len(generated_timelines) == 2
+    generated_timelines = DscaperGenerations.model_validate_json(json.dumps(gen_list_resp.content))
+    assert isinstance(generated_timelines, DscaperGenerations)
+    assert len(generated_timelines.generations) == 2
     # get non-existing timeline
     gen_list_resp2 = d.get_generated_timelines("non-existing-timeline")
     assert gen_list_resp2.status == "error"
@@ -406,4 +411,17 @@ def test_string_to_list(temp_lib_base):
     # Test with quotes
     # assert d.string_to_list('["a", "b", "c"]') == ["a", "b", "c"]
     # assert d.string_to_list('"a"') == ["a"]
+
+def test_dscaper_web_response(temp_lib_base):
+    d = Dscaper(lib_base_path=temp_lib_base)
+    # Test DscaperWebResponse with DscaperJsonResponse
+    api_response = DscaperJsonResponse(status="success", content=json.dumps({"key": "value"}))
+    web_response = DscaperWebResponse(api_response)
+    assert web_response.status_code == 200
+    assert web_response.media_type == "application/json"    
+    # Test DscaperWebResponse with DscaperApiResponse
+    api_response2 = DscaperApiResponse(status="error", status_code=400, content="Bad Request")
+    web_response2 = DscaperWebResponse(api_response2)
+    assert web_response2.status_code == 400
+    assert web_response2.media_type == "text/plain"
 

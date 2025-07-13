@@ -380,7 +380,7 @@ class Dscaper:
 
         :return: A list of timelines.
         """
-        timelines = []
+        timelines = DscaperTimelines()
         for root, dirs, files in os.walk(self.timeline_basedir):
             if root == self.timeline_basedir:
                 for dir_name in dirs:
@@ -388,8 +388,8 @@ class Dscaper:
                     if os.path.exists(timeline_path):
                         with open(timeline_path, "r") as f:
                             timeline = DscaperTimeline.model_validate_json(f.read())
-                            timelines.append(timeline)
-        return DscaperJsonResponse(content=json.dumps([timeline.model_dump_json() for timeline in timelines]))
+                            timelines.timelines.append(timeline)
+        return DscaperJsonResponse(content=timelines.model_dump_json())
 
 
     def list_backgrounds(self, name: str) -> DscaperJsonResponse:
@@ -409,15 +409,15 @@ class Dscaper:
                 status_code=status.HTTP_404_NOT_FOUND,
                 content=json.dumps({"description": f"Timeline '{name}' does not exist."})
             )
-        backgrounds = []
+        backgrounds = DscaperBackgrounds()
         for bg_file in os.listdir(background_path):
             bg_file_path = os.path.join(background_path, bg_file)
             if os.path.isfile(bg_file_path):
                 with open(bg_file_path, "r") as f:
                     background = DscaperBackground.model_validate_json(f.read())
-                    backgrounds.append(background)
+                    backgrounds.backgrounds.append(background)
         return DscaperJsonResponse(
-            content=json.dumps([bg.model_dump_json() for bg in backgrounds]),
+            content=backgrounds.model_dump_json(),
         )
 
 
@@ -438,14 +438,14 @@ class Dscaper:
                 status_code=status.HTTP_404_NOT_FOUND,
                 content=json.dumps({"description": f"Timeline '{name}' does not exist."})
             )
-        events = []
+        events = DscaperEvents()
         for event_file in os.listdir(events_path):
             event_file_path = os.path.join(events_path, event_file)
             if os.path.isfile(event_file_path):
                 with open(event_file_path, "r") as f:
                     event = DscaperEvent.model_validate_json(f.read())
-                    events.append(event)
-        return DscaperJsonResponse(content=json.dumps([event.model_dump_json() for event in events]))
+                    events.events.append(event)
+        return DscaperJsonResponse(content=events.model_dump_json())
 
 
     def get_generated_timelines(self, name: str) -> DscaperJsonResponse:
@@ -466,7 +466,7 @@ class Dscaper:
                 content=json.dumps({"description": f"Timeline '{name}' does not exist."})
             )
         # Read properties of all generated timelines
-        generated_timelines = []
+        generated_timelines = DscaperGenerations()
         for generate_dir in os.listdir(generate_path):
             generate_dir_path = os.path.join(generate_path, generate_dir)
             if os.path.isdir(generate_dir_path):
@@ -474,11 +474,9 @@ class Dscaper:
                 if os.path.exists(properties_file):
                     with open(properties_file, "r") as f:
                         properties = DscaperGenerate.model_validate_json(f.read())
-                        generated_timelines.append(properties)
+                        generated_timelines.generations.append(properties)
         # Return the list of generated timelines
-        return DscaperJsonResponse(
-            content=json.dumps([timeline.model_dump_json() for timeline in generated_timelines]),
-        )
+        return DscaperJsonResponse(content=generated_timelines.model_dump_json())
 
 
     def get_generated_timeline_by_id(self, name: str, generate_id: str) -> DscaperJsonResponse:
