@@ -65,7 +65,7 @@ class Dscaper:
         if os.path.exists(audio_destination) and not update:
             return DscaperApiResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content="File already exists. Use PUT to update it.")
         elif not os.path.exists(audio_destination) and update:
-            return DscaperApiResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content="File does not exist. Use POST to create it.")
+            return DscaperApiResponse(status="error", status_code=status.HTTP_404_NOT_FOUND, content="File does not exist. Use POST to create it.")
         # create the directory if it does not exist
         os.makedirs(file_path, exist_ok=True)
         # save the file to the audio path
@@ -117,7 +117,7 @@ class Dscaper:
                 audio_data = f.read()
             return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=audio_data, media_type="audio/" + ext[1:])
         else:
-            return DscaperApiResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content="Unsupported audio file format")
+            return DscaperApiResponse(status="error", status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, content="Unsupported audio file format")
         
 
     def get_libraries(self) -> DscaperJsonResponse:
@@ -586,7 +586,6 @@ class Dscaper:
         print(f"*** Processing distribution: {distribution}")
         if not isinstance(distribution, list):
             raise ValueError("Distribution must be a list or string.")
-            return None
         dist_type = distribution[0]
         if dist_type == 'const':
             if len(distribution) != 2:

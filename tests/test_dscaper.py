@@ -53,8 +53,12 @@ def test_store_audio_and_read_audio(temp_lib_base):
     resp = d.store_audio("non-existing-file.wav", metadata)
     assert resp.status == "error"
     # Should fail on invalid audio file (length)
-    invalid_file = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "invalid_audio.wav")
+    invalid_file = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "empty_audio.wav")
     resp = d.store_audio(invalid_file, metadata)
+    assert resp.status == "error"
+    # Should fail on invalid audio file (type)
+    invalid_file2 = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "invalid_audio.wav")
+    resp = d.store_audio(invalid_file2, metadata)
     assert resp.status == "error"
     # test storing a valid audio file
     valid_file = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "valid_audio.wav")
@@ -71,6 +75,18 @@ def test_store_audio_and_read_audio(temp_lib_base):
     # resp = d.store_audio(valid_bytes, metadata)
     # print(f"*** Response: {resp}")
     # assert resp.status == "success"
+    # add already existing audio file
+    resp = d.store_audio(valid_file, metadata)
+    assert resp.status == "error"
+    assert resp.status_code == 400
+    # update existing audio file
+    resp = d.store_audio(valid_file, metadata, update=True)
+    assert resp.status == "success"
+    # update non-existing audio file
+    metadata.filename = "non-existing.wav"
+    resp = d.store_audio(valid_file, metadata, update=True)
+    assert resp.status == "error"
+    assert resp.status_code == 404
     # Now test reading metadata
     resp2 = d.read_audio("lib1", "label1", "valid.json")
     assert resp2.status == "success"
@@ -78,6 +94,14 @@ def test_store_audio_and_read_audio(temp_lib_base):
     resp3 = d.read_audio("lib1", "label1", "valid.wav")
     assert resp3.status == "success"
     assert isinstance(resp3.content, bytes)
+    # test reading non-existing audio
+    resp4 = d.read_audio("lib1", "label1", "non-existing.wav")
+    assert resp4.status == "error"
+    assert resp4.status_code == 404
+    # test reading non-existing metadata
+    resp5 = d.read_audio("lib1", "label1", "non-existing.json")
+    assert resp5.status == "error"
+    assert resp5.status_code == 404
 
 def test_get_libraries(temp_lib_base):
     test_lib_path = os.path.join(os.getcwd(), "tests", "data")
@@ -129,7 +153,6 @@ def test_get_filenames(temp_lib_base):
     assert "17-CAR-Rolls-Royce-Horn.wav" in filenames
     assert "17-CAR-Rolls-Royce-Horn.json" in filenames
 
-
 def test_create_timeline_and_list_timelines(temp_lib_base):
     d = Dscaper(lib_base_path=temp_lib_base)
     props = TimelineCreateDTO(duration=10.0, description="desc")
@@ -152,7 +175,6 @@ def test_create_timeline_and_list_timelines(temp_lib_base):
     resp2 = d.create_timeline("timeline1", props)
     assert resp2.status == "error"
     assert resp2.status_code == 400
-
 
 def test_add_background_and_list_backgrounds(temp_lib_base):
     d = Dscaper(lib_base_path=temp_lib_base)
@@ -191,6 +213,10 @@ def test_add_background_and_list_backgrounds(temp_lib_base):
     resp2 = d.add_background("non-existing-timeline", bg)
     assert resp2.status == "error"
     assert resp2.status_code == 404
+    # list backgrounds of a non-existing timeline
+    list_resp2 = d.list_backgrounds("non-existing-timeline")
+    assert list_resp2.status == "error"
+    assert list_resp2.status_code == 404
 
 def test_add_event_and_list_events(temp_lib_base):
     d = Dscaper(lib_base_path=temp_lib_base)
@@ -225,6 +251,14 @@ def test_add_event_and_list_events(temp_lib_base):
     ev_item = json.loads(events[0])
     assert "id" in ev_item
     assert ev_item["library"] == "my_lib"
+    # add event to a non-existing timeline
+    resp2 = d.add_event("non-existing-timeline", ev)
+    assert resp2.status == "error"
+    assert resp2.status_code == 404
+    # list events of a non-existing timeline
+    list_resp2 = d.list_events("non-existing-timeline")
+    assert list_resp2.status == "error"
+    assert list_resp2.status_code == 404
 
 def test_generate_timeline(temp_lib_base):
     d = Dscaper(lib_base_path=temp_lib_base)
@@ -279,6 +313,10 @@ def test_generate_timeline(temp_lib_base):
     assert "soundscape.wav" in generated_data2.generated_files
     # TODO: fix
     print("++++", generated_data2.generated_files)
+    # generate none-existing timeline
+    gen_resp3 = d.generate_timeline("non-existing-timeline", gen_props)
+    assert gen_resp3.status == "error"
+    assert gen_resp3.status_code == 404
     # get generated timelines
     gen_list_resp = d.get_generated_timelines("timeline3")
     assert gen_list_resp.status == "success"
@@ -297,14 +335,24 @@ def test_generate_timeline(temp_lib_base):
     gen_timeline_resp2 = d.get_generated_timeline_by_id("timeline3", "non-existing-id")
     assert gen_timeline_resp2.status == "error"
     assert gen_timeline_resp2.status_code == 404
-    # get generated file
+    # get generated wav file
     gen_file_resp = d.get_generated_file("timeline3", generated_data.id, "soundscape.wav")
     assert gen_file_resp.status == "success"
     assert isinstance(gen_file_resp.content, bytes)
-    # get non-existing generated file
+    # get non-existing generated wav file
     gen_file_resp2 = d.get_generated_file("timeline3", generated_data.id, "non-existing-file.wav")
     assert gen_file_resp2.status == "error"
     assert gen_file_resp2.status_code == 404
+    # get generated wav file from non-existing timeline
+    gen_file_resp3 = d.get_generated_file("non-existing-timeline", generated_data.id, "soundscape.wav")
+    assert gen_file_resp3.status == "error"
+    assert gen_file_resp3.status_code == 404
+    # get generated jams file
+    gen_jams_resp = d.get_generated_file("timeline3", generated_data.id, "soundscape.jams")
+    assert gen_jams_resp.status == "success"
+    # get generated txt file
+    gen_txt_resp = d.get_generated_file("timeline3", generated_data.id, "soundscape.txt")
+    assert gen_txt_resp.status == "success"
 
 def test_get_distribution_tuple(temp_lib_base):
     # const
@@ -313,6 +361,8 @@ def test_get_distribution_tuple(temp_lib_base):
     assert d.get_distribution_tuple(['const', 'text']) == ('const', 'text')
     with pytest.raises(ValueError):
         d.get_distribution_tuple(['const', '1', '2'])
+    with pytest.raises(ValueError):
+        d.get_distribution_tuple(['const',{ 'invalid': 'format'}])
     # choose
     assert d.get_distribution_tuple(['choose', '[1,2,3]']) == ('choose', ['1', '2', '3'])
     with pytest.raises(ValueError):
@@ -339,6 +389,9 @@ def test_get_distribution_tuple(temp_lib_base):
     # invalidnormal
     with pytest.raises(ValueError):
         d.get_distribution_tuple(['invalidnormal', '5', '2'])
+    # invalid format
+    with pytest.raises(ValueError):
+        d.get_distribution_tuple({'invalid_format'})
 
 
 def test_string_to_list(temp_lib_base):
@@ -348,6 +401,8 @@ def test_string_to_list(temp_lib_base):
     assert d.string_to_list("a, b") == ["a", "b"]
     assert d.string_to_list("a") == ["a"]
     assert d.string_to_list("") == []
+    with pytest.raises(ValueError):
+        d.string_to_list(['a', 'b', 'c'])  
     # Test with quotes
     # assert d.string_to_list('["a", "b", "c"]') == ["a", "b", "c"]
     # assert d.string_to_list('"a"') == ["a"]
