@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Json
 from typing import Any
 from fastapi import Response
 
@@ -67,6 +67,12 @@ class DscaperApiResponse(BaseModel):
     status_code: int
     content: Any | None = None  # Optional response message
     media_type: str | None = "text/plain"  # Optional type field for response categorization
+
+class DscaperJsonResponse(BaseModel):
+    status: str = "success"
+    status_code: int = 200
+    content: Json[Any]
+    media_type: str = "application/json"
 
 class DscaperWebResponse(Response):
     def __init__(self, api_response: DscaperApiResponse):
