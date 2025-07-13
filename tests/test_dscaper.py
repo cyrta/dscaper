@@ -28,20 +28,20 @@ def temp_lib_base():
     shutil.rmtree(temp_dir)
 
 def test_init_creates_dirs(temp_lib_base):
-    d = Dscaper(lib_base_path=temp_lib_base)
+    d = Dscaper(dscaper_base_path=temp_lib_base)
     assert os.path.exists(os.path.join(temp_lib_base, "timelines"))
     assert os.path.exists(os.path.join(temp_lib_base, "libraries"))
 
 def test_init_raises_if_path_missing():
     with pytest.raises(FileNotFoundError):
-        Dscaper(lib_base_path="/nonexistent/path/for/test")
+        Dscaper(dscaper_base_path="/nonexistent/path/for/test")
 
-def test_get_lib_base_path(temp_lib_base):
-    d = Dscaper(lib_base_path=temp_lib_base)
-    assert d.get_lib_base_path() == temp_lib_base
+def test_get_dscaper_base_path(temp_lib_base):
+    d = Dscaper(dscaper_base_path=temp_lib_base)
+    assert d.get_dscaper_base_path() == temp_lib_base
 
 def test_store_audio_and_read_audio(temp_lib_base):
-    d = Dscaper(lib_base_path=temp_lib_base)
+    d = Dscaper(dscaper_base_path=temp_lib_base)
     # Prepare dummy audio file (WAV header, not valid audio)
     # audio_bytes = b'RIFF$\x00\x00\x00WAVEfmt ' + b'\x10\x00\x00\x00\x01\x00\x01\x00' + b'\x40\x1f\x00\x00\x80>\x00\x00\x02\x00\x10\x00data\x00\x00\x00\x00'
     metadata = AudioMetadataSaveDTO(
@@ -105,7 +105,7 @@ def test_store_audio_and_read_audio(temp_lib_base):
 
 def test_get_libraries(temp_lib_base):
     test_lib_path = os.path.join(os.getcwd(), "tests", "data")
-    d = Dscaper(lib_base_path=test_lib_path)
+    d = Dscaper(dscaper_base_path=test_lib_path)
     # Test getting libraries
     resp = d.get_libraries()
     print(resp)
@@ -117,7 +117,7 @@ def test_get_libraries(temp_lib_base):
 
 def test_get_labels(temp_lib_base):
     test_lib_path = os.path.join(os.getcwd(), "tests", "data")
-    d = Dscaper(lib_base_path=test_lib_path)
+    d = Dscaper(dscaper_base_path=test_lib_path)
     # Test getting labels of non-existing library
     resp = d.get_labels("non-existing-lib")
     assert resp.status == "error"
@@ -133,7 +133,7 @@ def test_get_labels(temp_lib_base):
 
 def test_get_filenames(temp_lib_base):
     test_lib_path = os.path.join(os.getcwd(), "tests", "data")
-    d = Dscaper(lib_base_path=test_lib_path)
+    d = Dscaper(dscaper_base_path=test_lib_path)
     # Test getting filenames of non-existing library/label
     resp = d.get_filenames("non-existing-lib", "non-existing-label")
     assert resp.status == "error"
@@ -154,7 +154,7 @@ def test_get_filenames(temp_lib_base):
     assert "17-CAR-Rolls-Royce-Horn.json" in filenames
 
 def test_create_timeline_and_list_timelines(temp_lib_base):
-    d = Dscaper(lib_base_path=temp_lib_base)
+    d = Dscaper(dscaper_base_path=temp_lib_base)
     props = TimelineCreateDTO(duration=10.0, description="desc")
     resp = d.create_timeline("timeline1", props)
     assert resp.status == "success" 
@@ -178,7 +178,7 @@ def test_create_timeline_and_list_timelines(temp_lib_base):
     assert resp2.status_code == 400
 
 def test_add_background_and_list_backgrounds(temp_lib_base):
-    d = Dscaper(lib_base_path=temp_lib_base)
+    d = Dscaper(dscaper_base_path=temp_lib_base)
     # Create a timeline first
     props = TimelineCreateDTO(duration=10.0, description="desc")
     resp = d.create_timeline("timeline1", props)
@@ -221,7 +221,7 @@ def test_add_background_and_list_backgrounds(temp_lib_base):
     assert list_resp2.status_code == 404
 
 def test_add_event_and_list_events(temp_lib_base):
-    d = Dscaper(lib_base_path=temp_lib_base)
+    d = Dscaper(dscaper_base_path=temp_lib_base)
     # Create a timeline first
     props = TimelineCreateDTO(duration=10.0, description="desc")
     resp = d.create_timeline("timeline2", props)
@@ -266,7 +266,7 @@ def test_add_event_and_list_events(temp_lib_base):
     assert list_resp2.status_code == 404
 
 def test_generate_timeline(temp_lib_base):
-    d = Dscaper(lib_base_path=temp_lib_base)
+    d = Dscaper(dscaper_base_path=temp_lib_base)
     # Create a timeline first
     props = TimelineCreateDTO(duration=10.0, description="desc")
     resp = d.create_timeline("timeline3", props)
@@ -361,7 +361,7 @@ def test_generate_timeline(temp_lib_base):
 
 def test_get_distribution_tuple(temp_lib_base):
     # const
-    d = Dscaper(lib_base_path=temp_lib_base)
+    d = Dscaper(dscaper_base_path=temp_lib_base)
     assert d.get_distribution_tuple(['const', '7']) == ('const', 7)
     assert d.get_distribution_tuple(['const', 'text']) == ('const', 'text')
     with pytest.raises(ValueError):
@@ -400,7 +400,7 @@ def test_get_distribution_tuple(temp_lib_base):
 
 
 def test_string_to_list(temp_lib_base):
-    d = Dscaper(lib_base_path=temp_lib_base)
+    d = Dscaper(dscaper_base_path=temp_lib_base)
     assert d.string_to_list("[a, b, c]") == ["a", "b", "c"]
     assert d.string_to_list("[]") == []
     assert d.string_to_list("a, b") == ["a", "b"]
@@ -413,7 +413,7 @@ def test_string_to_list(temp_lib_base):
     # assert d.string_to_list('"a"') == ["a"]
 
 def test_dscaper_web_response(temp_lib_base):
-    d = Dscaper(lib_base_path=temp_lib_base)
+    d = Dscaper(dscaper_base_path=temp_lib_base)
     # Test DscaperWebResponse with DscaperJsonResponse
     api_response = DscaperJsonResponse(status="success", content=json.dumps({"key": "value"}))
     web_response = DscaperWebResponse(api_response)

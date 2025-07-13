@@ -9,7 +9,7 @@ import soundfile
 import json
 
 
-DEFAULT_LIB_BASE_PATH = os.path.join(os.getcwd(), "data")
+DSCAPER_DEFAULT_BASE_PATH = os.path.join(os.getcwd(), "data")
 
 
 class Dscaper:
@@ -17,25 +17,25 @@ class Dscaper:
     Dscaper offers an alternavie api to the Scaper library.
     """
 
-    def __init__(self, lib_base_path: str | None = None):
-        self.lib_base_path = lib_base_path if lib_base_path else DEFAULT_LIB_BASE_PATH
-        if not os.path.exists(self.lib_base_path):
+    def __init__(self, dscaper_base_path: str | None = None):
+        self.dscaper_base_path = dscaper_base_path if dscaper_base_path else DSCAPER_DEFAULT_BASE_PATH
+        if not os.path.exists(self.dscaper_base_path):
             # retur error if the base path does not exist
-            raise FileNotFoundError(f"Error. The specified library base path does not exist: {self.lib_base_path}")
-        self.timeline_basedir = os.path.join(self.lib_base_path, "timelines")
+            raise FileNotFoundError(f"Error. The specified library base path does not exist: {self.dscaper_base_path}")
+        self.timeline_basedir = os.path.join(self.dscaper_base_path, "timelines")
         if not os.path.exists(self.timeline_basedir):
             os.makedirs(self.timeline_basedir)
-        self.library_basedir = os.path.join(self.lib_base_path, "libraries")
+        self.library_basedir = os.path.join(self.dscaper_base_path, "libraries")
         if not os.path.exists(self.library_basedir):
             os.makedirs(self.library_basedir)
     
 
-    def get_lib_base_path(self) -> str:        
+    def get_dscaper_base_path(self) -> str:        
         """
         Returns the base path for the libraries.
         :return: The base path for the libraries.
         """        
-        return self.lib_base_path
+        return self.dscaper_base_path
     
 
     def store_audio(self, file: Union[Annotated[bytes, File()], str], metadata: AudioMetadataSaveDTO, update: bool = False) -> DscaperApiResponse:
