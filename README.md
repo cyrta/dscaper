@@ -2,23 +2,19 @@
 
 ![dScaper logo](/docs/dScaper-logo.png)
 
-A Scaper fork optimized for generation of realistic dialogs. 
+*A [Scaper](https://github.com/justinsalamon/scaper) fork optimized  audio generation pipelines.* 
 
-[![PyPI](https://img.shields.io/pypi/v/scaper.svg)](https://pypi.python.org/pypi/scaper)
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-[![Build Status](https://travis-ci.org/justinsalamon/scaper.svg?branch=master)](https://travis-ci.org/justinsalamon/scaper)
-[![Coverage Status](https://coveralls.io/repos/github/justinsalamon/scaper/badge.svg?branch=master)](https://coveralls.io/github/justinsalamon/scaper?branch=master)
-[![Documentation Status](https://readthedocs.org/projects/scaper/badge/?version=latest)](http://scaper.readthedocs.io/en/latest/?badge=latest)
-[![Downloads](https://pepy.tech/badge/scaper)](https://pepy.tech/project/scaper)
-[![PyPI](https://img.shields.io/badge/python-2.7%2C%203.4%2C%203.5%2C%203.6-blue.svg)]()
+dScaper was developped during [JSALT25](https://jsalt2025.fit.vut.cz/) Workshop by David Grünert. dScaper offers an 
+alternative API for accessing Scaper that is optimized for the usage pipelines. Please refer to 
+[Scaper documentation](http://scaper.readthedocs.io/) for details of the original Scaper API.
 
-Please refer to the [documentation](http://scaper.readthedocs.io/) for details.
+## Architecture and key features
 
-For the motivation behind scaper and its applications check out the scaper-paper:
+dScaper can eighter be use as python module or as separate server. In both variants, dScaper not only handles timeline generation, but it also stores and manages audio files.
 
-[Scaper: A library for soundscape synthesis and augmentation](http://www.justinsalamon.com/uploads/4/3/9/4/4394963/salamon_scaper_waspaa_2017.pdf)<br />
-J. Salamon, D. MacConnell, M. Cartwright, P. Li, and J. P. Bello<br />
-In IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (WASPAA), New Paltz, NY, USA, Oct. 2017.
+![architecture overview](docs/dscaper_architecture.drawio.svg)
+
+
 
 ## Installation
 
