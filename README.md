@@ -15,7 +15,6 @@ dScaper can eighter be use as python module or as separate server. In both varia
 ![architecture overview](docs/dscaper_architecture.drawio.svg)
 
 
-
 ## Installation
 
 ### Non-python dependencies
@@ -27,12 +26,6 @@ If you are installing Scaper on Windows, you will also need:
 
 On Linux/macOS SoX is replaced by [SoxBindings](https://github.com/pseeth/soxbindings) which is significantly faster, giving better runtime performance in Scaper. On these platforms SoxBindings is installed automatically when calling `pip install scaper` (see below).
 
-#### Linux/macOS
-If you're using [Anaconda](https://www.anaconda.com/distribution/) (or [miniconda](https://docs.conda.io/en/latest/miniconda.html)) to manage your python environment (recommended), you can install FFmpeg using `conda` on macOS/Linux:
-
-```
-conda install -c conda-forge ffmpeg
-```
 
 #### macOS
 On macOS FFmpeg can be installed using [homebrew](https://brew.sh/):
@@ -47,7 +40,6 @@ On linux you can use your distribution's package manager, e.g. on Ubuntu (15.04 
 ```
 sudo apt-get install ffmpeg
 ```
-NOTE: on earlier versions of Ubuntu [ffmpeg may point to a Libav binary](http://stackoverflow.com/a/9477756/2007700) which is not the correct binary. If you are using Anaconda, you can install the correct version as described earlier by calling `conda install -c conda-forge ffmpeg`. Otherwise, you can [obtain a static binary from the ffmpeg website](https://ffmpeg.org/download.html).
 
 #### Windows
 On windows you can use the provided installation binaries:
@@ -56,126 +48,89 @@ On windows you can use the provided installation binaries:
 
 ### Installing Scaper
 
-The simplest way to install scaper is by using `pip`, which will also install the required python dependencies if needed. To install scaper using pip, simply run:
-
-```
-pip install scaper
-```
-
 To install the latest version of scaper from source, clone or pull the lastest version:
 
 ```
-git clone git@github.com:justinsalamon/scaper.git
+git clone https://github.com/cyrta/drender.git
 ```
 
-Then enter the source folder and install using pip to handle python dependencies:
+Then create an environment and install the package from requirements.txt:
 
 ```
-cd scaper
-pip install -e .
+cd drender
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+pip install -r requirements.txt
 ```
-## Tutorial
-
-To help you get started with scaper, please see this [step-by-step tutorial](http://scaper.readthedocs.io/en/latest/tutorial.html).
-
-## Example
+## Python API
+You can use dScaper as a Python module. The main class is `Dscaper`, which provides methods for creating timelines, adding audio files, and generating audio. dScaper needs a folder to store audio files, metadata and timelines. You can specify this folder using the `dscaper_base_path` parameter when creating an instance of `Dscaper`. If you do not specify it, dScaper will use the default path `./data`.
 
 ```python
 import scaper
-import numpy as np
 
-# OUTPUT FOLDER
-outfolder = 'audio/soundscapes/'
-
-# SCAPER SETTINGS
-fg_folder = 'audio/soundbank/foreground/'
-bg_folder = 'audio/soundbank/background/'
-
-n_soundscapes = 1000
-ref_db = -50
-duration = 10.0 
-
-min_events = 1
-max_events = 9
-
-event_time_dist = 'truncnorm'
-event_time_mean = 5.0
-event_time_std = 2.0
-event_time_min = 0.0
-event_time_max = 10.0
-
-source_time_dist = 'const'
-source_time = 0.0
-
-event_duration_dist = 'uniform'
-event_duration_min = 0.5
-event_duration_max = 4.0
-
-snr_dist = 'uniform'
-snr_min = 6
-snr_max = 30
-
-pitch_dist = 'uniform'
-pitch_min = -3.0
-pitch_max = 3.0
-
-time_stretch_dist = 'uniform'
-time_stretch_min = 0.8
-time_stretch_max = 1.2
-    
-# Generate 1000 soundscapes using a truncated normal distribution of start times
-
-for n in range(n_soundscapes):
-    
-    print('Generating soundscape: {:d}/{:d}'.format(n+1, n_soundscapes))
-    
-    # create a scaper
-    sc = scaper.Scaper(duration, fg_folder, bg_folder)
-    sc.protected_labels = []
-    sc.ref_db = ref_db
-    
-    # add background
-    sc.add_background(label=('const', 'noise'), 
-                      source_file=('choose', []), 
-                      source_time=('const', 0))
-
-    # add random number of foreground events
-    n_events = np.random.randint(min_events, max_events+1)
-    for _ in range(n_events):
-        sc.add_event(label=('choose', []), 
-                     source_file=('choose', []), 
-                     source_time=(source_time_dist, source_time), 
-                     event_time=(event_time_dist, event_time_mean, event_time_std, event_time_min, event_time_max), 
-                     event_duration=(event_duration_dist, event_duration_min, event_duration_max), 
-                     snr=(snr_dist, snr_min, snr_max),
-                     pitch_shift=(pitch_dist, pitch_min, pitch_max),
-                     time_stretch=(time_stretch_dist, time_stretch_min, time_stretch_max))
-    
-    # generate
-    audiofile = os.path.join(outfolder, "soundscape_unimodal{:d}.wav".format(n))
-    jamsfile = os.path.join(outfolder, "soundscape_unimodal{:d}.jams".format(n))
-    txtfile = os.path.join(outfolder, "soundscape_unimodal{:d}.txt".format(n))
-    
-    sc.generate(audiofile, jamsfile,
-                allow_repeated_label=True,
-                allow_repeated_source=False,
-                reverb=0.1,
-                disable_sox_warnings=True,
-                no_audio=False,
-                txt_path=txtfile)
+dsc = scaper.Dscaper(dscaper_base_path="/path/to/dscaper/data")
 ```
 
-## How to contribute
+dScaper will create two subfolders in the specified path: `libraries` and `timelines` if they do not already exist. 
 
-If you would like to contribute a feature and/or bugfix to this repository, please follow the following steps:
+```/path/to/dscaper/data/
+├── libraries
+│   ├── [library_data...]
+├── timelines
+│   ├── [timeline_data...]
+```
+Librarys are used to store audio files and their metadata. They are organized as follows: 
 
-1. Create an issue describing the feature/fix.
-2. I will reply on the issue thread to determine whether the feature/fix can/should be added.
-3. Discuss design/implementation details in the issue thread and reach consensus.
-4. Once consensus is reached (and only then), start a pull request (PR). Further discsussion can continue in the PR thread.
-5. Implement feature/fix, ensuring all current unit tests pass and new tests are added to maintain 100% test coverage. Inline docstrings as well as the main docs files should also be updated accordingly.
-6. Request code review once the pull request is ready for review.
-7. Fix requested changes to the pull request if any. Repeat steps 5-7 until the PR is approved.
-8. once the PR is approved I will merge it into master (and most likely create a new release).
+```/path/to/dscaper/data/
+└── libraries
+    ├── [library_1_name]
+    │   ├── [label_1]
+    │   │   ├── [audio_file_1.wav]
+    │   │   ├── [audio_file_1.json]
+    │   │   ├── [audio_file_2.wav]  
+    │   │   └── [...]   
+    │   ├── [label_2]
+    │   │   ├── [audio_file_2.wav]
+    │   │   └── [audio_file_2.json]
+    │   └── [...]
+    └── [library_2_name]
+        └── [...]
+```
+Timelines define the structure of the generated audio. They are organized as follows:
+```
+└── timelines
+    ├── [timeline_1_name]
+    │   ├── timeline.json
+    │   ├── background
+    │   │   ├── [background_1_id].json
+    │   │   ├── [background_2_id].json
+    │   │   └── [...]
+    │   ├── events
+    │   │   ├── [event_1_id].json
+    │   │   ├── [event_2_id].json
+    │   │   └── [...]
+    │   └── generate
+    │       ├── [generation_1_id]
+    │       │    ├── generate.json
+    │       │    ├── soundscape.wav
+    │       │    ├── soundscape.jams
+    │       │    └── soundscape.text
+    │       └── [...]
+    └── [timeline_2_name]
+        └── [...]
+```
 
-IMPORTANT: please be sure to always discuss a proposed feature/fix in an issue before creating a pull request.
+
+### Adding audio files to the library
+
+You can add audio files to the dScaper library using the `store_audio` method. This method takes a file path and metadata as parameters. The metadata should be an instance of `DscaperAudio`.
+
+```python
+from scaper.dscaper_datatypes import DscaperAudio
+
+file_path = "/path/to/audio/file.wav"
+metadata = DscaperAudio(library="my_library", label="my_label", filename="my_file.wav")
+dsc.store_audio(file_path, metadata)
+```
+
+## Web API
