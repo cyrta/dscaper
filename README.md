@@ -265,7 +265,13 @@ Here is a complete list of methods available in the `Dscaper` class. Most method
 
 
 ## Web API
-The dScaper Web API provides a RESTful interface for interacting with dScaper functionality over HTTP. The API is implemented in the `web/api` directory and allows you to manage libraries, timelines, audio files, and trigger audio generation remotely.
+The dScaper Web API provides a RESTful interface for interacting with dScaper functionality over HTTP. The API is implemented in the `web/api` directory and allows you to manage libraries, timelines, audio files, and trigger audio generation remotely. For development, you can run the API server using FastAPI dev server:
+
+```bash
+> fastapi dev main.py
+```
+
+There is a [postman](https://www.postman.com/) collection available in the `docs` directory that contains all endpoints and example requests. You can import this collection into Postman to test the API.
 
 ### Audio API
 
