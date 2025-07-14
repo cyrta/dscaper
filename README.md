@@ -34,6 +34,7 @@ The main features of dScaper are:
 - **Timeline management**: dScaper allows you to create and manage timelines, which define the structure of the generated audio. Timelines can include background sounds and events, which are used to generate the final audio output.dScaper supports the same distributions for sampling as the original Scaper library.
 - **Audio generation**: dScaper can generate multiple version of a timeline. It stores the generated audio files along with their metadata making it easy to retrieve and compare them later.
 - **Web API and Python API**: dScaper provides a RESTful Web API and a Python API. The web API allows to use dScaper as a standalone server simplifying integration and scaling of pipelines.
+- **Event types**: dScaper supports event types, allowing you to categorize events in the timeline. This is useful for generating audio for multiple speakers or sound sources in a single timeline. It allows to apply different post-processings, e.g. applying different room accoustics to different speakers and sound sources.
 
 
 ## Installation
@@ -96,9 +97,9 @@ dScaper will create two subfolders in the specified path: `libraries` and `timel
 
 ```/path/to/dscaper/data/
 ├── libraries
-│   ├── [library_data...]
-├── timelines
-│   ├── [timeline_data...]
+│   └── [library_data...]
+└── timelines
+    └── [timeline_data...]
 ```
 Librarys are used to store audio files and their metadata. They are organized as follows: 
 
@@ -140,6 +141,24 @@ Timelines define the structure of the generated audio. They are organized as fol
     └── [timeline_2_name]
         └── [...]
 ```
+When generating with `save_isolated_eventtypes` set to `True`, an additional subfolder `soundscape_eventtypes` is created in the `generate` folder. The structure is as follows:
+
+
+```
+   └── generate
+       ├── [generation_1_id]
+       │    ├── generate.json 
+       │    ├── soundscape.wav - complete soundscape with all events
+       │    ├── ..
+       │    ├── soundscape_eventtypes
+       │    │    ├── [event_type_1].wav - soundscape with only events of type 1
+       │    │    ├── [event_type_2].wav - soundscape with only events of type 2
+       │    │    ├── [...]
+       │    │    └── no_type.wav - soundscape with all events that do not have an event type assigned
+       └── [...]
+```
+You also generate with `save_isolated_events` set to `True`. In this case, a separate audio file is created for each event in the soundscape. The audio files are stored in a subfolder `soundscape_events` within the `generate` folder. 
+
 
 ### Adding audio files to the library
 

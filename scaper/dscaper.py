@@ -610,7 +610,7 @@ class Dscaper:
                     return_tuple = (dist_type, value)
             else:
                 raise ValueError("Constant distribution value must be a number or a string.")
-            print(f"*** Returning constant distribution tuple: {return_tuple}")
+            # print(f"*** Returning constant distribution tuple: {return_tuple}")
             return return_tuple
         elif dist_type == 'choose':
             if len(distribution) != 2:
