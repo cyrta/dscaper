@@ -18,6 +18,11 @@ class Dscaper:
     """
 
     def __init__(self, dscaper_base_path: str | None = None):
+        """
+        Initialize the Dscaper with a base path for the libraries and timelines.
+        :param dscaper_base_path: The base path for the libraries and timelines. If None, uses the default path.
+        :raises FileNotFoundError: If the base path does not exist.
+        """
         self.dscaper_base_path = dscaper_base_path if dscaper_base_path else DSCAPER_DEFAULT_BASE_PATH
         if not os.path.exists(self.dscaper_base_path):
             # retur error if the base path does not exist
@@ -44,7 +49,13 @@ class Dscaper:
         
         :param file: The audio file to be stored or a file path.
         :param metadata: Metadata for the audio file.
+        :param update: If True, update the existing file, otherwise return an error if the file already exists.
         :return: An AudioMetadata object containing the stored audio's metadata.
+        Exceptions:
+            - 404: If the audio file does not exist.
+            - 400: If the audio file is empty or invalid.
+            - 400: If the file already exists and update is False.
+            - 404: If the file does not exist and update is True.
         """
         m = metadata
         # if file is a path, read the file
@@ -178,6 +189,8 @@ class Dscaper:
         :param name: The name of the timeline.
         :param properties: Properties for the timeline.
         :return: A Timeline object containing the created timeline's metadata.
+        Exceptions:
+            - 400: If the timeline already exists.
         """
         timeline_path = os.path.join(self.timeline_basedir, name)
         timeline_config = os.path.join(timeline_path, "timeline.json")
@@ -314,33 +327,33 @@ class Dscaper:
         )
         # add backgrounds
         for bg in os.listdir(os.path.join(timeline_path, "background")):
-            print(f"*** Processing background: {bg}")
+            # print(f"*** Processing background: {bg}")
             bg_file = os.path.join(timeline_path, "background", bg)
             if os.path.isfile(bg_file):
                 with open(bg_file, "r") as f:
                     background = DscaperBackground.model_validate_json(f.read())
                 sc.add_background(
-                    label=self.get_distribution_tuple(background.label),
-                    source_file=self.get_distribution_tuple(background.source_file),
-                    source_time=self.get_distribution_tuple(background.source_time),
+                    label=self._get_distribution_tuple(background.label),
+                    source_file=self._get_distribution_tuple(background.source_file),
+                    source_time=self._get_distribution_tuple(background.source_time),
                     library=os.path.join(self.library_basedir, background.library) if background.library else None
                 )
         # add events
         for event in os.listdir(os.path.join(timeline_path, "events")):
-            print(f"*** Processing event: {event}")
+            # print(f"*** Processing event: {event}")
             event_file = os.path.join(timeline_path, "events", event)
             if os.path.isfile(event_file):
                 with open(event_file, "r") as f:
                     event_data = DscaperEvent.model_validate_json(f.read())
                 sc.add_event(
-                    label=self.get_distribution_tuple(event_data.label),
-                    source_file=self.get_distribution_tuple(event_data.source_file),
-                    source_time=self.get_distribution_tuple(event_data.source_time),
-                    event_time=self.get_distribution_tuple(event_data.event_time),
-                    event_duration=self.get_distribution_tuple(event_data.event_duration),
-                    snr=self.get_distribution_tuple(event_data.snr),
-                    pitch_shift=self.get_distribution_tuple(event_data.pitch_shift) if event_data.pitch_shift else None,
-                    time_stretch=self.get_distribution_tuple(event_data.time_stretch) if event_data.time_stretch else None,
+                    label=self._get_distribution_tuple(event_data.label),
+                    source_file=self._get_distribution_tuple(event_data.source_file),
+                    source_time=self._get_distribution_tuple(event_data.source_time),
+                    event_time=self._get_distribution_tuple(event_data.event_time),
+                    event_duration=self._get_distribution_tuple(event_data.event_duration),
+                    snr=self._get_distribution_tuple(event_data.snr),
+                    pitch_shift=self._get_distribution_tuple(event_data.pitch_shift) if event_data.pitch_shift else None,
+                    time_stretch=self._get_distribution_tuple(event_data.time_stretch) if event_data.time_stretch else None,
                     event_type=event_data.event_type,
                     library=os.path.join(self.library_basedir, event_data.library) if event_data.library else None
                 )
@@ -579,9 +592,9 @@ class Dscaper:
     # Helper functions to convert distributions
     # to tuples for scaper compatibility
 
-    def get_distribution_tuple(self, distribution):
+    def _get_distribution_tuple(self, distribution):
         """Convert a distribution list to a tuple."""
-        print(f"*** Processing distribution: {distribution}")
+        # print(f"*** Processing distribution: {distribution}")
         if not isinstance(distribution, list):
             raise ValueError("Distribution must be a list or string.")
         dist_type = distribution[0]
@@ -603,11 +616,11 @@ class Dscaper:
         elif dist_type == 'choose':
             if len(distribution) != 2:
                 raise ValueError("Choose distribution must have exactly one list of values.")
-            return (dist_type, self.string_to_list(distribution[1]))
+            return (dist_type, self._string_to_list(distribution[1]))
         elif dist_type == 'choose_weighted':    
             if len(distribution) != 3:
                 raise ValueError("Choose weighted distribution must have exactly one list of values and one list of weights.")
-            return (dist_type, self.string_to_list(distribution[1]), self.string_to_list(distribution[2]))
+            return (dist_type, self._string_to_list(distribution[1]), self._string_to_list(distribution[2]))
         elif dist_type == 'uniform':
             if len(distribution) != 3:
                 raise ValueError("Uniform distribution must have exactly two values (min, max).")
@@ -623,12 +636,12 @@ class Dscaper:
         else:
             raise ValueError("Invalid distribution format. Must be a list or string.")
         
-    def string_to_list(self, string):
+    def _string_to_list(self, string):
         """Convert a string to a list."""
         if not isinstance(string, str):
             raise ValueError("Input must be a string.")
         # remove brackets
         string = string.strip().strip('[]')
         output_list = [s.strip() for s in string.split(',') if s.strip()]
-        print(f"*** Converting string to list: {string} to {output_list}")
+        # print(f"*** Converting string to list: {string} to {output_list}")
         return output_list

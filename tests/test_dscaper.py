@@ -359,58 +359,58 @@ def test_generate_timeline(temp_lib_base):
     gen_txt_resp = d.get_generated_file("timeline3", generated_data.id, "soundscape.txt")
     assert gen_txt_resp.status == "success"
 
-def test_get_distribution_tuple(temp_lib_base):
+def test__get_distribution_tuple(temp_lib_base):
     # const
     d = Dscaper(dscaper_base_path=temp_lib_base)
-    assert d.get_distribution_tuple(['const', '7']) == ('const', 7)
-    assert d.get_distribution_tuple(['const', 'text']) == ('const', 'text')
+    assert d._get_distribution_tuple(['const', '7']) == ('const', 7)
+    assert d._get_distribution_tuple(['const', 'text']) == ('const', 'text')
     with pytest.raises(ValueError):
-        d.get_distribution_tuple(['const', '1', '2'])
+        d._get_distribution_tuple(['const', '1', '2'])
     with pytest.raises(ValueError):
-        d.get_distribution_tuple(['const',{ 'invalid': 'format'}])
+        d._get_distribution_tuple(['const',{ 'invalid': 'format'}])
     # choose
-    assert d.get_distribution_tuple(['choose', '[1,2,3]']) == ('choose', ['1', '2', '3'])
+    assert d._get_distribution_tuple(['choose', '[1,2,3]']) == ('choose', ['1', '2', '3'])
     with pytest.raises(ValueError):
-        d.get_distribution_tuple(['choose', '[1,2,3]', 'extra'])
+        d._get_distribution_tuple(['choose', '[1,2,3]', 'extra'])
     # choose_weighted
     # TODO: check if this is correct
-    assert d.get_distribution_tuple(['choose_weighted', '[1,2,3]', '[0.1,0.2,0.7]']) == ('choose_weighted', ['1', '2', '3'], ['0.1', '0.2', '0.7'])
+    assert d._get_distribution_tuple(['choose_weighted', '[1,2,3]', '[0.1,0.2,0.7]']) == ('choose_weighted', ['1', '2', '3'], ['0.1', '0.2', '0.7'])
     with pytest.raises(ValueError):
         # TODO: fix this
-        # d.get_distribution_tuple(['choose_weighted', '[1,2,3]', '[0.1,0.2]'])
-        d.get_distribution_tuple(['choose_weighted', '[1,2,3]'])
+        # d._get_distribution_tuple(['choose_weighted', '[1,2,3]', '[0.1,0.2]'])
+        d._get_distribution_tuple(['choose_weighted', '[1,2,3]'])
     # uniform
-    assert d.get_distribution_tuple(['uniform', '1', '10']) == ('uniform', 1, 10)
+    assert d._get_distribution_tuple(['uniform', '1', '10']) == ('uniform', 1, 10)
     with pytest.raises(ValueError):
-        d.get_distribution_tuple(['uniform', '1', '10', 'extra'])
+        d._get_distribution_tuple(['uniform', '1', '10', 'extra'])
     # normal
-    assert d.get_distribution_tuple(['normal', '5', '2']) == ('normal', 5, 2)
+    assert d._get_distribution_tuple(['normal', '5', '2']) == ('normal', 5, 2)
     with pytest.raises(ValueError):
-        d.get_distribution_tuple(['normal', '5', '2', 'extra'])
+        d._get_distribution_tuple(['normal', '5', '2', 'extra'])
     # truncnorm
-    assert d.get_distribution_tuple(['truncnorm', '5', '2', '1', '10']) == ('truncnorm', 5, 2, 1, 10)
+    assert d._get_distribution_tuple(['truncnorm', '5', '2', '1', '10']) == ('truncnorm', 5, 2, 1, 10)
     with pytest.raises(ValueError):
-        d.get_distribution_tuple(['truncnorm', '5', '2', '1', '10', 'extra'])
+        d._get_distribution_tuple(['truncnorm', '5', '2', '1', '10', 'extra'])
     # invalidnormal
     with pytest.raises(ValueError):
-        d.get_distribution_tuple(['invalidnormal', '5', '2'])
+        d._get_distribution_tuple(['invalidnormal', '5', '2'])
     # invalid format
     with pytest.raises(ValueError):
-        d.get_distribution_tuple({'invalid_format'})
+        d._get_distribution_tuple({'invalid_format'})
 
 
-def test_string_to_list(temp_lib_base):
+def test__string_to_list(temp_lib_base):
     d = Dscaper(dscaper_base_path=temp_lib_base)
-    assert d.string_to_list("[a, b, c]") == ["a", "b", "c"]
-    assert d.string_to_list("[]") == []
-    assert d.string_to_list("a, b") == ["a", "b"]
-    assert d.string_to_list("a") == ["a"]
-    assert d.string_to_list("") == []
+    assert d._string_to_list("[a, b, c]") == ["a", "b", "c"]
+    assert d._string_to_list("[]") == []
+    assert d._string_to_list("a, b") == ["a", "b"]
+    assert d._string_to_list("a") == ["a"]
+    assert d._string_to_list("") == []
     with pytest.raises(ValueError):
-        d.string_to_list(['a', 'b', 'c'])  
+        d._string_to_list(['a', 'b', 'c'])  
     # Test with quotes
-    # assert d.string_to_list('["a", "b", "c"]') == ["a", "b", "c"]
-    # assert d.string_to_list('"a"') == ["a"]
+    # assert d._string_to_list('["a", "b", "c"]') == ["a", "b", "c"]
+    # assert d._string_to_list('"a"') == ["a"]
 
 def test_dscaper_web_response(temp_lib_base):
     d = Dscaper(dscaper_base_path=temp_lib_base)
