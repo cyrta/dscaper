@@ -63,7 +63,7 @@ SUPPORTED_DIST = {"const": _sample_const,
 EventSpec = namedtuple(
     'EventSpec',
     ['label', 'source_file', 'source_time', 'event_time', 'event_duration',
-     'snr', 'role', 'pitch_shift', 'time_stretch','event_type'])
+     'snr', 'role', 'pitch_shift', 'time_stretch','event_type', 'library'])
 '''
 Container for storing event specifications, either probabilistic (i.e. using
 distribution tuples to specify possible values) or instantiated (i.e. storing
@@ -964,9 +964,49 @@ def _validate_event_type(event_type):
                 'characters are allowed.')
 
 
+def _validate_library(library):
+    '''
+    Validate that a library is a valid Scaper library.
+
+    Parameters
+    ----------
+    library : str or None
+        path to the library
+
+    Raises
+    ------
+    ScaperError
+        If the validation fails.
+
+    '''
+    if library is None:
+        return
+    if not isinstance(library, str):
+        raise ScaperError('Library must be a string.')
+    if not os.path.isdir(library):
+        raise ScaperError('Library must be a valid directory.')
+    # check that library contains at least one subdirectory
+    if not any(os.path.isdir(os.path.join(library, d)) for d in os.listdir(library)):
+        raise ScaperError('Library must contain at least one subdirectory with audio files.')
+    # check that all library subdirectories contain at least one audio file
+    # with a valid extension
+
+    audio_extensions = ('.wav', '.mp3', '.flac', '.ogg')
+    for subdir in os.listdir(library):
+        subdir_path = os.path.join(library, subdir)
+        if os.path.isdir(subdir_path):
+            if not any(os.path.isfile(os.path.join(subdir_path, f)) and
+                       f.lower().endswith(audio_extensions)
+                       for f in os.listdir(subdir_path)):
+                raise ScaperError(
+                    'Library subdirectory {:s} does not contain any audio '
+                    'files with valid extensions.'.format(subdir_path))
+  
+
+
 def _validate_event(label, source_file, source_time, event_time,
                     event_duration, snr, allowed_labels, pitch_shift,
-                    time_stretch, event_type):
+                    time_stretch, event_type, library):
     '''
     Check that event parameter values are valid.
 
@@ -983,6 +1023,7 @@ def _validate_event(label, source_file, source_time, event_time,
     pitch_shift : tuple or None
     time_stretch: tuple or None
     event_type: str or None
+    library : str or None
 
     Raises
     ------
@@ -1026,6 +1067,9 @@ def _validate_event(label, source_file, source_time, event_time,
     # Event type
     _validate_event_type(event_type)
 
+    # Library
+    _validate_library(library)
+
 
 class Scaper(object):
     '''
@@ -1067,10 +1111,12 @@ class Scaper(object):
         ----------
         duration : float
             Duration of the soundscape, in seconds.
-        fg_path : str
-            Path to foreground folder.
-        bg_path : str
-            Path to background folder.
+        fg_path : str or None
+            Path to foreground folder. If None, test folder will be used.
+            This only makes sense if all events have a library specified.
+        bg_path : str or None
+            Path to background folder. . If None, test folder will be used.
+            This only makes sense if all events have a library specified.
         protected_labels : list 
             Provide a list of protected foreground labels. When a foreground
             label is in the protected list it means that when a sound event
@@ -1106,6 +1152,13 @@ class Scaper(object):
         # Start with empty specifications
         self.fg_spec = []
         self.bg_spec = []
+
+        if fg_path is None:
+            # If no foreground path is provided, use the test folder
+            fg_path = os.path.join(os.getcwd(), "tests", "data", "audio", "foreground")
+        if bg_path is None:
+            # If no background path is provided, use the test folder
+            bg_path = os.path.join(os.getcwd(), "tests", "data", "audio", "background")
 
         # Validate paths and set
         expanded_fg_path = os.path.expanduser(fg_path)
@@ -1169,7 +1222,7 @@ class Scaper(object):
         '''
         self.random_state = _check_random_state(random_state)
 
-    def add_background(self, label, source_file, source_time):
+    def add_background(self, label, source_file, source_time, library=None):
         '''
         Add a background recording to the background specification.
 
@@ -1204,6 +1257,11 @@ class Scaper(object):
             smaller than ``<source file duration> - <soundscape duration>``.
             Larger values will be automatically changed to fulfill this
             requirement when calling ``Scaper.generate``.
+        library : str or None
+            Specifies the library from which the background is taken. If not None, 
+            audio is sampled from the library folder instead of the
+            background folder. This is useful for sharing samples between
+            different projects.
 
         Notes
         -----
@@ -1251,7 +1309,7 @@ class Scaper(object):
 
         # Validate parameter format and values
         _validate_event(label, source_file, source_time, event_time,
-                        event_duration, snr, self.bg_labels, None, None, None)
+                        event_duration, snr, self.bg_labels, None, None, None, library)
 
         # Create background sound event
         bg_event = EventSpec(label=label,
@@ -1263,13 +1321,15 @@ class Scaper(object):
                              role=role,
                              pitch_shift=pitch_shift,
                              time_stretch=time_stretch,
-                             event_type=None)
+                             event_type=None,
+                             library=library)
 
         # Add event to background spec
         self.bg_spec.append(bg_event)
 
+
     def add_event(self, label, source_file, source_time, event_time,
-                  event_duration, snr, pitch_shift, time_stretch, event_type=None):
+                  event_duration, snr, pitch_shift, time_stretch, event_type=None, library=None):
         '''
         Add a foreground sound event to the foreground specification.
 
@@ -1326,6 +1386,11 @@ class Scaper(object):
         event_type : str or None
             Specifies the type of the event. This is a string that can be used
             to categorize the events
+        library : str or None
+            Specifies the library from which the event is taken. If not None, 
+            audio is sampled from the library folder instead of the
+            foreground folder. This is useful for sharing samples between
+            different projects.
 
         Notes
         -----
@@ -1376,7 +1441,7 @@ class Scaper(object):
         # SAFETY CHECKS
         _validate_event(label, source_file, source_time, event_time,
                         event_duration, snr, self.fg_labels, pitch_shift,
-                        time_stretch, event_type)
+                        time_stretch, event_type, library)
 
         # Create event
         event = EventSpec(label=label,
@@ -1388,7 +1453,8 @@ class Scaper(object):
                           role='foreground',
                           pitch_shift=pitch_shift,
                           time_stretch=time_stretch,
-                          event_type=event_type)
+                          event_type=event_type,
+                          library=library)
 
         # Add event to foreground specification
         self.fg_spec.append(event)
@@ -1396,6 +1462,7 @@ class Scaper(object):
     def _instantiate_event(self, event, isbackground=False,
                            allow_repeated_label=True,
                            allow_repeated_source=True,
+                           allowed_labels=[],
                            used_labels=[],
                            used_source_files=[],
                            disable_instantiation_warnings=False):
@@ -1451,14 +1518,17 @@ class Scaper(object):
             to select.
 
         '''
-        # set paths and labels depending on whether its a foreground/background
-        # event
-        if isbackground:
-            file_path = self.bg_path
-            allowed_labels = self.bg_labels
+        # print("Instantiating event: ", event)
+
+        if event.library is None:
+            if isbackground:
+                file_path = self.bg_path
+            else:
+                file_path = self.fg_path
         else:
-            file_path = self.fg_path
-            allowed_labels = self.fg_labels
+            file_path = event.library
+
+        # print("File path: ", file_path)
 
         # determine label
         # special case: choose tuple with empty list
@@ -1698,7 +1768,8 @@ class Scaper(object):
                                        role=role,
                                        pitch_shift=pitch_shift,
                                        time_stretch=time_stretch,
-                                       event_type=event.event_type)
+                                       event_type=event.event_type,
+                                       library=event.library)
         # Return
         return instantiated_event
 
@@ -1751,17 +1822,54 @@ class Scaper(object):
         # INSTANTIATE BACKGROUND AND FOREGROUND EVENTS AND ADD TO ANNOTATION
         # NOTE: logic for instantiating bg and fg events is NOT the same.
 
+        # Get the set of libraries used in the background and foreground
+        background_libraries = set(
+            [event.library for event in self.bg_spec if event.library is not None])
+        foreground_libraries = set(
+            [event.library for event in self.fg_spec if event.library is not None])
+        
+        # get the labels for each library
+        bg_labels_available = {"default": self.bg_labels}
+        fg_labels_available = {"default": self.fg_labels}
+        bg_labels_used = {"default": []}
+        fg_labels_used = {"default": []}
+        bg_files_used = {"default": []}
+        fg_files_used = {"default": []}
+        
+        for library in background_libraries:
+            labels = []
+            for root, dirs, files in os.walk(library):
+                if root == library:
+                    labels.extend(dirs)
+            bg_labels_available[library] = labels
+            bg_labels_used[library] = []
+            bg_files_used[library] = []
+        for library in foreground_libraries:
+            labels = []
+            for root, dirs, files in os.walk(library):
+                if root == library:
+                    labels.extend(dirs)
+            fg_labels_available[library] = labels
+            fg_labels_used[library] = []
+            fg_files_used[library] = []
+        
+        # Print the labels for each library
+        # for library, labels in bg_labels_available.items():
+        #     print(f"Background library {library} labels: {labels}")
+        # for library, labels in fg_labels_available.items():
+        #     print(f"Foreground library {library} labels: {labels}")
+
         # Add background sounds
-        bg_labels = []
-        bg_source_files = []
         for event in self.bg_spec:
+            library = event.library if event.library is not None else "default"
             value = self._instantiate_event(
                 event,
                 isbackground=True,
                 allow_repeated_label=allow_repeated_label,
                 allow_repeated_source=allow_repeated_source,
-                used_labels=bg_labels,
-                used_source_files=bg_source_files,
+                allowed_labels=bg_labels_available[library],
+                used_labels=bg_labels_used[library],
+                used_source_files=bg_files_used[library],
                 disable_instantiation_warnings=disable_instantiation_warnings)
 
             # Note: add_background doesn't allow to set a time_stretch, i.e.
@@ -1773,16 +1881,16 @@ class Scaper(object):
                        confidence=1.0)
 
         # Add foreground events
-        fg_labels = []
-        fg_source_files = []
         for event in self.fg_spec:
+            library = event.library if event.library is not None else "default"
             value = self._instantiate_event(
                 event,
                 isbackground=False,
                 allow_repeated_label=allow_repeated_label,
                 allow_repeated_source=allow_repeated_source,
-                used_labels=fg_labels,
-                used_source_files=fg_source_files,
+                allowed_labels=fg_labels_available[library],
+                used_labels=fg_labels_available[library],
+                used_source_files=fg_files_used[library],
                 disable_instantiation_warnings=disable_instantiation_warnings)
 
             if value.time_stretch is not None:

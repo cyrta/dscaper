@@ -1175,6 +1175,26 @@ def test_validate_event_type():
     scaper.core._validate_event_type("valid_event-type")
 
 
+def test_validate_library():
+    # library must be a string
+    pytest.raises(ScaperError, scaper.core._validate_library, 5)
+    pytest.raises(ScaperError, scaper.core._validate_library, ['list'])
+    # library must not be an empty string
+    pytest.raises(ScaperError, scaper.core._validate_library, "")
+    # invalid library path
+    invalid_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'invalidlib')
+    pytest.raises(ScaperError, scaper.core._validate_library, invalid_path)
+    # library path without subfolders
+    no_subfolders_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'emptylib')
+    pytest.raises(ScaperError, scaper.core._validate_library, no_subfolders_path)
+    # library path with subfolders but no audio files
+    no_audio_files_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'noaudio')
+    pytest.raises(ScaperError, scaper.core._validate_library, no_audio_files_path)
+    # valid library path
+    valid_path = os.path.join(os.getcwd(), 'tests', 'data', 'libraries', 'testlib')
+    scaper.core._validate_library(valid_path)
+
+
 def test_validate_event():
 
     bad_allowed_labels = [0, 'yes', 1j, np.array([1, 2, 3])]
@@ -1190,7 +1210,8 @@ def test_validate_event():
                       allowed_labels=bal,
                       pitch_shift=None,
                       time_stretch=None,
-                      event_type=None)
+                      event_type=None,
+                      library=None)
 
 
 def test_scaper_init():
@@ -1311,7 +1332,8 @@ def test_scaper_add_background():
                                   role='background',
                                   pitch_shift=None,
                                   time_stretch=None,
-                                  event_type=None)
+                                  event_type=None,
+                                  library=None)
     assert sc.bg_spec == [bg_event_expected]
 
 
@@ -1342,7 +1364,8 @@ def test_scaper_add_event():
                                   role='foreground',
                                   pitch_shift=('normal', 0, 1),
                                   time_stretch=('uniform', 0.8, 1.2),
-                                  event_type=None)
+                                  event_type=None,
+                                  library=None)
     assert sc.fg_spec[0] == fg_event_expected
 
 
@@ -1358,7 +1381,8 @@ def test_scaper_instantiate_event():
                          role='foreground',
                          pitch_shift=('normal', 0, 1),
                          time_stretch=('uniform', 0.8, 1.2),
-                         event_type=None)
+                         event_type=None,
+                         library=None)
 
     # test valid case
     sc = scaper.Scaper(10.0, fg_path=FG_PATH, bg_path=BG_PATH)
@@ -1384,6 +1408,7 @@ def test_scaper_instantiate_event():
     for _ in range(20):
         instantiated_event = sc._instantiate_event(
             fg_event8, isbackground=False, allow_repeated_label=False,
+            allowed_labels=['siren', 'human_voice', 'car_horn'],
             allow_repeated_source=True, used_labels=['siren', 'human_voice'],
             disable_instantiation_warnings=True)
         assert instantiated_event.label == 'car_horn'
@@ -2113,6 +2138,52 @@ def test_generate_isolated_eventtypes():
 
     # clean up the isolated events folder
     shutil.rmtree(isolated_events_path)
+
+
+def test_generate_from_library():
+
+    soundscape_duration = 10.0
+    sc = scaper.Scaper(soundscape_duration, None, None)
+    sc.ref_db = -20
+    sc.sr = 44100
+
+    library_path = os.path.join(os.getcwd(),'tests', 'data', 'libraries','testlib')
+
+    sc.add_background(label=('choose', []),
+                  source_file=('choose', []),
+                  source_time=('const', 0),
+                  library=library_path)
+    sc.add_event(label=('choose', []),
+                source_file=('choose', []),
+                source_time=('const', 0),
+                event_time=('uniform', 0, 9),
+                event_duration=('truncnorm', 3, 1, 0.5, 5),
+                snr=('normal', 10, 3),
+                pitch_shift=('uniform', -2, 2),
+                time_stretch=('uniform', 0.8, 1.2),
+                library=library_path)
+    
+    tmpfiles = []
+    with _close_temp_files(tmpfiles):
+        temp_wav_file = tempfile.NamedTemporaryFile(suffix='.wav', delete=True)
+        temp_jam_file = tempfile.NamedTemporaryFile(suffix='.jams', delete=True)
+        temp_txt_file = tempfile.NamedTemporaryFile(suffix='.txt', delete=True)
+        tmpfiles.append(temp_wav_file)
+        tmpfiles.append(temp_jam_file)
+        tmpfiles.append(temp_txt_file)
+        
+        sc.generate(temp_wav_file.name, temp_jam_file.name,
+                allow_repeated_label=True,
+                allow_repeated_source=True,
+                reverb=0,
+                disable_sox_warnings=True,
+                no_audio=False,
+                txt_path=temp_txt_file.name)
+        
+        # make sure files were created
+        assert os.path.exists(temp_wav_file.name)
+        assert os.path.exists(temp_jam_file.name)   
+        assert os.path.exists(temp_txt_file.name)
 
 
 def test_generate():
