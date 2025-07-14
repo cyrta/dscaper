@@ -57,7 +57,7 @@ git clone https://github.com/cyrta/drender.git
 Then create an environment and install the package from requirements.txt:
 
 ```
-cd drender
+cd scaper
 python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 pip install -r requirements.txt
@@ -120,7 +120,6 @@ Timelines define the structure of the generated audio. They are organized as fol
         └── [...]
 ```
 
-
 ### Adding audio files to the library
 
 You can add audio files to the dScaper library using the `store_audio` method. This method takes a file path and metadata as parameters. The metadata should be an instance of `DscaperAudio`.
@@ -131,6 +130,36 @@ from scaper.dscaper_datatypes import DscaperAudio
 file_path = "/path/to/audio/file.wav"
 metadata = DscaperAudio(library="my_library", label="my_label", filename="my_file.wav")
 dsc.store_audio(file_path, metadata)
+```
+### Assemble timelines
+You can generate timelines using the `create_timeline` method. This method takes a `DscaperTimeline` instance as a parameter. The `DscaperTimeline` class allows you to specify the name, duration, and description of the timeline.
+
+```python
+from scaper.dscaper_datatypes import DscaperTimeline
+
+timeline_metadata = DscaperTimeline(name="my_timeline", duration=10.0, description="Test timeline")
+dsc.create_timeline(timeline_metadata)
+```
+Now you can add background sounds and events to the timeline. Background sounds are added using the `add_background` method that takes a `DscaperBackground` instance as a parameter. 
+
+```python
+from scaper.dscaper_datatypes import DscaperBackground
+background_metadata = DscaperBackground(..)
+```
+
+Events are added using the `add_event` method that takes a `DscaperEvent` instance as a parameter.
+```python
+from scaper.dscaper_datatypes import DscaperEvent
+event_metadata = DscaperEvent(..)
+```
+### Generating timelines
+Once you have added all the necessary background sounds and events to the timeline, you can generate the audio using the `generate_timeline` method. This method takes a `DscaperGenerate` instance as a parameter.
+
+```python
+from scaper.dscaper_datatypes import DscaperGenerate
+
+generate_metadata = DscaperGenerate(...)
+dsc.generate_timeline("my_timeline", generate_metadata)
 ```
 
 ## Web API
