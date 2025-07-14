@@ -2,10 +2,10 @@
 
 ![dScaper logo](/docs/dScaper-logo.png)
 
-*A [Scaper](https://github.com/justinsalamon/scaper) fork optimized for audio generation pipelines.* 
+***A [Scaper](https://github.com/justinsalamon/scaper) fork optimized for audio generation pipelines.*** 
 
 dScaper was developped during [JSALT25](https://jsalt2025.fit.vut.cz/) Workshop by David Grünert. dScaper offers an 
-alternative API for accessing Scaper that is optimized for the usage pipelines. Please refer to 
+alternative API for accessing Scaper that is optimized for the usage in pipelines. Please refer to 
 [Scaper documentation](http://scaper.readthedocs.io/) for details of the original Scaper API.
 
 ## Table of Contents
@@ -30,10 +30,10 @@ dScaper can eighter be use as python module or as separate server. In both varia
 ![architecture overview](docs/dscaper_architecture.drawio.svg)
 
 The main features of dScaper are:
-- **Audio library management**: dScaper allows you to store and manage audio files in a structured way. Audio files are organized into libraries and labels, making it easy to retrieve and use them in timelines.
-- **Timeline management**: dScaper allows you to create and manage timelines, which define the structure of the generated audio. Timelines can include background sounds and events, which are used to generate the final audio output.
-- **Audio generation**: dScaper can generate audio based on the defined timelines. It stores the generated audio files along with their metadata for each run, making it easy to retrieve and use them later.
-- **Web API and Python API**: dScaper provides a RESTful Web API for remote access and management of audio libraries and timelines. It also offers a Python API for programmatic access, making it easy to integrate dScaper into your applications or workflows.
+- **Audio library management**: dScaper allows you to store and manage audio files in a structured way. Audio files are organized into libraries and labels, making it easy to retrieve and use them in multiple timelines.
+- **Timeline management**: dScaper allows you to create and manage timelines, which define the structure of the generated audio. Timelines can include background sounds and events, which are used to generate the final audio output.dScaper supports the same distributions for sampling as the original Scaper library.
+- **Audio generation**: dScaper can generate multiple version of a timeline. It stores the generated audio files along with their metadata making it easy to retrieve and compare them later.
+- **Web API and Python API**: dScaper provides a RESTful Web API and a Python API. The web API allows to use dScaper as a standalone server simplifying integration and scaling of pipelines.
 
 
 ## Installation
@@ -72,7 +72,7 @@ On windows you can use the provided installation binaries:
 To install the latest version of scaper from source, clone or pull the lastest version:
 
 ```
-git clone https://github.com/cyrta/drender.git
+git clone https://github.com/cyrta/dscaper
 ```
 
 Then create an environment and install the package from requirements.txt:
