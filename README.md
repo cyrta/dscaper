@@ -20,6 +20,7 @@ alternative API for accessing Scaper that is optimized for the usage pipelines. 
 - [Web API](#web-api)
   - [Audio API](#audio-api)
   - [Timeline API](#timeline-api)
+- [Distribution lists](#distribution-lists)
 
 
 ## Architecture and key features
@@ -152,7 +153,7 @@ metadata = DscaperAudio(library="my_library", label="my_label", filename="my_fil
 dsc.store_audio(file_path, metadata)
 ```
 ### Assemble timelines
-You can generate timelines using the `create_timeline` method. This method takes a `DscaperTimeline` instance as a parameter. The `DscaperTimeline` class allows you to specify the name, duration, and description of the timeline.
+To assemble a timeline, you first create an empty timeline using the `create_timeline` method. This method takes a `DscaperTimeline` instance as a parameter which allows you to specify the name, duration, and description of the timeline. The name of the timeline should be unique and will be used to reference the timeline later. dScaper will refuse to create a timeline with the same name as an existing one.
 
 ```python
 from scaper.dscaper_datatypes import DscaperTimeline
@@ -160,13 +161,14 @@ from scaper.dscaper_datatypes import DscaperTimeline
 timeline_metadata = DscaperTimeline(name="my_timeline", duration=10.0, description="Test timeline")
 dsc.create_timeline(timeline_metadata)
 ```
-Now you can add background sounds and events to the timeline. Background sounds are added using the `add_background` method that takes a `DscaperBackground` instance as a parameter. DscaperBackground represents a background audio element in the Dscaper system.
+Now you can add background sounds and events to the timeline. Background sounds are added using the `add_background` method that takes a `DscaperBackground` instance as a parameter. DscaperBackground represents a background audio element in the Dscaper system. Paramters of type `list[str]` are used to represent distributions in the format described in the [Distribution lists](#distribution-lists) section below.
+
 
 Attributes of `DscaperBackground`:
   - `library (str)`: The name of the audio library from which the background is sourced.
-  - `label (list[str]`): The label(s) describing the background audio. Defaults to ['choose', '[]'].
-  - `source_file (list[str])`: The file(s) from which the background audio is taken. Defaults to ['choose', '[]'].
-  - `source_time (list[str])`: The time specification for the source audio. Defaults to ['const', '0'].
+  - `label (list[str])`: The label(s) describing the background audio. Defaults to `['choose', '[]']`.
+  - `source_file (list[str])`: The file(s) from which the background audio is taken. Defaults to `['choose', '[]']`.
+  - `source_time (list[str])`: The time specification for the source audio. Defaults to `['const', '0']`.
 
 
 ```python
@@ -174,19 +176,19 @@ from scaper.dscaper_datatypes import DscaperBackground
 background_metadata = DscaperBackground(..)
 ```
 
-Events are added using the `add_event` method that takes a `DscaperEvent` instance as a parameter. DscaperEvent represents a single event in a soundscape timeline.
+Events are added using the `add_event` method that takes a `DscaperEvent` instance as a parameter. DscaperEvent represents a single event in a soundscape timeline. Paramters of type `list[str]` are used to represent distributions in the format described in the [Distribution lists](#distribution-lists) section below.
 
 Attributes of `DscaperEvent`:
   - `library (str)`: The name of the audio library from which the event is sourced.
-  - `label (list[str])`: The label or category for the event, typically in the form ['choose', '[]'].
-  - `source_file (list[str])`: The source audio file for the event, typically in the form ['choose', '[]'].
-  - `source_time (list[str])`: The start time within the source file, typically in the form ['const', '0'].
-  - `event_time (list[str])`: The time at which the event occurs in the timeline, typically in the form ['const', '0'].
-  - `event_duration (list[str])`: The duration of the event, typically in the form ['const', '5'].
-  - `snr (list[str])`: The signal-to-noise ratio for the event, typically in the form ['const', '0'].
-  - `pitch_shift (list[str] | None)`: Optional pitch shift parameters for the event.
-  - `time_stretch (list[str] | None)`: Optional time stretch parameters for the event.
-  - `event_type (str | None)`: Optional type of the event (e.g., speakerA, speakerB, soundSource1).
+  - `label (list[str])`: The label or category for the event, typically in the form `['choose', '[]']`.
+  - `source_file (list[str])`: The source audio file for the event, typically in the form `['choose', '[]']`.
+  - `source_time (list[str])`: The start time within the source file, typically in the form `['const', '0']`.
+  - `event_time (list[str])`: The time at which the event occurs in the timeline, typically in the form `['const', '0']`.
+  - `event_duration (list[str])`: The duration of the event, typically in the form `['const', '5']`.
+  - `snr (list[str])`: The signal-to-noise ratio for the event, typically in the form `['const', '0']`.
+  - `pitch_shift (list[str] | None)`: Optional pitch shift parameters for the event. Defaults to `None`.
+  - `time_stretch (list[str] | None)`: Optional time stretch parameters for the event. Defaults to `None`.
+  - `event_type (str | None)`: Optional type of the event (e.g., speakerA, speakerB, soundSource1). Defaults to `None`.
 
 ```python
 from scaper.dscaper_datatypes import DscaperEvent
@@ -378,3 +380,15 @@ The Timeline API provides endpoints for creating and managing timelines, adding 
 
 All endpoints return responses wrapped in a standard response object. Errors such as missing timelines or invalid parameters return appropriate HTTP status codes.
 """
+
+## Distribution lists
+dScaper supports the same distributions as the original Scaper library. Instead of tuples, it uses lists to represent distributions. All list elements must be of type string. The following distributions are supported:
+
+- `['const', value]`: Constant value distribution.
+- `['choose', list]`: Uniformly sample from a finite set of values given by `list`.
+- `['choose_weighted', list, weights]`: Sample from a finite set of values given by `list` with specified `weights` for each value.
+- `['uniform', min, max]`: Uniform distribution between `min` and `max`.
+- `['normal', mean, std]`: Normal distribution with specified `mean` and `std` (standard deviation).
+- `['truncnorm', mean, std, min, max]`: Truncated normal distribution with specified `mean`, `std`, and limits between `min` and `max`.
+
+If you use an empty list `[]`, it is interpreted as a distribution that samples from all available values. For example, if you specify `['choose', '[]']` for the label, it will sample from all available values in the library.
