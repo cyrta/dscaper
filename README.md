@@ -173,7 +173,9 @@ Attributes of `DscaperBackground`:
 
 ```python
 from scaper.dscaper_datatypes import DscaperBackground
+
 background_metadata = DscaperBackground(..)
+dsc.add_background("my_timeline", background_metadata)
 ```
 
 Events are added using the `add_event` method that takes a `DscaperEvent` instance as a parameter. DscaperEvent represents a single event in a soundscape timeline. Paramters of type `list[str]` are used to represent distributions in the format described in the [Distribution lists](#distribution-lists) section below.
@@ -192,11 +194,13 @@ Attributes of `DscaperEvent`:
 
 ```python
 from scaper.dscaper_datatypes import DscaperEvent
+
 event_metadata = DscaperEvent(..)
+dsc.add_event("my_timeline", event_metadata)
 ```
 ### Generating timelines
 Once you have added all the necessary background sounds and events to the timeline, you can generate the audio using the `generate_timeline` method. This method takes a `DscaperGenerate` instance as a parameter.
-it Represents the configuration and metadata for a soundscape generation process.
+It represents the configuration and metadata for a soundscape generation process.
 
 Attributes of `DscaperGenerate`:
   - `seed (int)`: Random seed used for reproducibility of the generation process. Default is 0.
@@ -213,30 +217,32 @@ dsc.generate_timeline("my_timeline", generate_metadata)
 ```
 
 ### Dscaper class methods
-Here is a complete list of methods available in the `Dscaper` class:
+Here is a complete list of methods available in the `Dscaper` class. Most methods return a `DscaperJsonResponse` object, which contains the result of the operation and any relevant metadata. It has the following attributes:
+
+- `status`: The status of the operation (e.g., "success", "error").
+- `status_code`: The HTTP status code of the response (e.g., 200, 400).
+- `content`: The main content of the response. This depends on the method. See below for details.
+- `media_type`: The media type of the response content (e.g., "application/json", "text/plain").
+
 
 | Method | Description |
 |--------|-------------|
-| `get_dscaper_base_path()` | Returns the base path used for libraries and timelines. |
-| `store_audio(file, metadata, update=False)` | Store an audio file and its metadata in the library. Supports file upload and update. |
-| `read_audio(library, label, filename)` | Retrieve an audio file or its metadata from the library. |
-| `get_libraries()` | List all available audio libraries. |
-| `get_filenames(library, label)` | List all filenames within a specific library and label. |
-| `get_labels(library)` | List all labels within a specific library. |
-| `create_timeline(properties)` | Create a new timeline with specified properties. |
-| `add_background(name, properties)` | Add a background sound to a timeline. |
-| `add_event(name, properties)` | Add an event to a timeline. |
-| `generate_timeline(name, properties)` | Generate audio for a timeline using the provided generation parameters. |
-| `list_timelines()` | List all timelines and their metadata. |
-| `list_backgrounds(name)` | List all backgrounds in a specified timeline. |
-| `list_events(name)` | List all events in a specified timeline. |
-| `get_generated_timelines(name)` | List all generated outputs for a specified timeline. |
-| `get_generated_timeline_by_id(name, generate_id)` | Retrieve details of a specific generated output by its ID. |
-| `get_generated_file(name, generate_id, file_name)` | Download a specific generated file (audio or metadata) by name. |
-| `_get_distribution_tuple(distribution)` | Helper: Convert a distribution list to a tuple for Scaper compatibility. |
-| `_string_to_list(string)` | Helper: Convert a string representation of a list to a Python list. |
-
-
+| `store_audio(file, metadata, update=False)` | Store an audio file and its metadata in the library. Supports file upload and update. Returns a `DscaperJsonResponse`. Content has type `DscaperAudio` and contains all data stored. |
+| `read_audio(library, label, filename)` | Retrieve an audio file or its metadata from the library. Returns a `DscaperApiResponse` with content having the audio data. |
+| `create_timeline(properties)` | Create a new timeline with specified properties. Returns a `DscaperJsonResponse`. Content is of type `DscaperTimeline`  and contains all data stored.|
+| `add_background(timeline_name, properties)` | Add a background sound to a timeline. Returns a `DscaperJsonResponse`. Content is of type `DscaperBackground` and contains all data stored.|
+| `add_event(timeline_name, properties)` | Add an event to a timeline. Returns a `DscaperJsonResponse`. Content is of type `DscaperEvent` and contains all data stored. |
+| `generate_timeline(timeline_name, properties)` | Generate audio for a timeline using the provided generation parameters. Returns a `DscaperJsonResponse`. Content is of type `DscaperGenerate` and contains all data stored.|
+| `get_dscaper_base_path()` | Returns the base path used for libraries and timelines as string. |
+| `get_libraries()` | List all available audio libraries. Returns a `DscaperJsonResponse`. Content is a list of strings. |
+| `get_filenames(library, label)` | List all filenames within a specific library and label. Returns a `DscaperJsonResponse`. Content is a list of strings.|
+| `get_labels(library)` | List all labels within a specific library. Returns a `DscaperJsonResponse`. Content is a list of strings. |
+| `list_timelines()` | List all timelines and their metadata. Returns a `DscaperJsonResponse`. Content is of type `DscaperTimelines`. |
+| `list_backgrounds(timeline_name)` | List all backgrounds in a specified timeline. Returns a `DscaperJsonResponse`. Content is of type `DscaperBackgrounds`. |
+| `list_events(timeline_name)` | List all events in a specified timeline. Returns a `DscaperJsonResponse`. Content is of type `DscaperEvents`. |
+| `get_generated_timelines(timeline_name)` | List all generated outputs for a specified timeline. Returns a `DscaperJsonResponse`. Content is of type `DscaperGenerations`.|
+| `get_generated_timeline_by_id(timeline_name, generate_id)` | Retrieve details of a specific generated output by its ID. Returns a `DscaperJsonResponse`. Content is of type `DscaperGenerate` and contains all data stored. |
+| `get_generated_file(timeline_name, generate_id, file_name)` | Download a specific generated file (audio or metadata) by name. Returns a `DscaperJsonResponse`. Content is of type `DscaperGenerate` and contains all data stored. |
 
 
 ## Web API
