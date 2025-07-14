@@ -2,17 +2,37 @@
 
 ![dScaper logo](/docs/dScaper-logo.png)
 
-*A [Scaper](https://github.com/justinsalamon/scaper) fork optimized  audio generation pipelines.* 
+*A [Scaper](https://github.com/justinsalamon/scaper) fork optimized for audio generation pipelines.* 
 
 dScaper was developped during [JSALT25](https://jsalt2025.fit.vut.cz/) Workshop by David Grünert. dScaper offers an 
 alternative API for accessing Scaper that is optimized for the usage pipelines. Please refer to 
 [Scaper documentation](http://scaper.readthedocs.io/) for details of the original Scaper API.
+
+## Table of Contents
+
+- [Architecture and key features](#architecture-and-key-features)
+- [Installation](#installation)
+- [Python API](#python-api)
+  - [Adding audio files to the library](#adding-audio-files-to-the-library)
+  - [Assemble timelines](#assemble-timelines)
+  - [Generating timelines](#generating-timelines)
+  - [Dscaper class methods](#dscaper-class-methods)
+- [Web API](#web-api)
+  - [Audio API](#audio-api)
+  - [Timeline API](#timeline-api)
+
 
 ## Architecture and key features
 
 dScaper can eighter be use as python module or as separate server. In both variants, dScaper not only handles timeline generation, but it also stores and manages audio files.
 
 ![architecture overview](docs/dscaper_architecture.drawio.svg)
+
+The main features of dScaper are:
+- **Audio library management**: dScaper allows you to store and manage audio files in a structured way. Audio files are organized into libraries and labels, making it easy to retrieve and use them in timelines.
+- **Timeline management**: dScaper allows you to create and manage timelines, which define the structure of the generated audio. Timelines can include background sounds and events, which are used to generate the final audio output.
+- **Audio generation**: dScaper can generate audio based on the defined timelines. It stores the generated audio files along with their metadata for each run, making it easy to retrieve and use them later.
+- **Web API and Python API**: dScaper provides a RESTful Web API for remote access and management of audio libraries and timelines. It also offers a Python API for programmatic access, making it easy to integrate dScaper into your applications or workflows.
 
 
 ## Installation
@@ -140,20 +160,48 @@ from scaper.dscaper_datatypes import DscaperTimeline
 timeline_metadata = DscaperTimeline(name="my_timeline", duration=10.0, description="Test timeline")
 dsc.create_timeline(timeline_metadata)
 ```
-Now you can add background sounds and events to the timeline. Background sounds are added using the `add_background` method that takes a `DscaperBackground` instance as a parameter. 
+Now you can add background sounds and events to the timeline. Background sounds are added using the `add_background` method that takes a `DscaperBackground` instance as a parameter. DscaperBackground represents a background audio element in the Dscaper system.
+
+Attributes of `DscaperBackground`:
+  - `library (str)`: The name of the audio library from which the background is sourced.
+  - `label (list[str]`): The label(s) describing the background audio. Defaults to ['choose', '[]'].
+  - `source_file (list[str])`: The file(s) from which the background audio is taken. Defaults to ['choose', '[]'].
+  - `source_time (list[str])`: The time specification for the source audio. Defaults to ['const', '0'].
+
 
 ```python
 from scaper.dscaper_datatypes import DscaperBackground
 background_metadata = DscaperBackground(..)
 ```
 
-Events are added using the `add_event` method that takes a `DscaperEvent` instance as a parameter.
+Events are added using the `add_event` method that takes a `DscaperEvent` instance as a parameter. DscaperEvent represents a single event in a soundscape timeline.
+
+Attributes of `DscaperEvent`:
+  - `library (str)`: The name of the audio library from which the event is sourced.
+  - `label (list[str])`: The label or category for the event, typically in the form ['choose', '[]'].
+  - `source_file (list[str])`: The source audio file for the event, typically in the form ['choose', '[]'].
+  - `source_time (list[str])`: The start time within the source file, typically in the form ['const', '0'].
+  - `event_time (list[str])`: The time at which the event occurs in the timeline, typically in the form ['const', '0'].
+  - `event_duration (list[str])`: The duration of the event, typically in the form ['const', '5'].
+  - `snr (list[str])`: The signal-to-noise ratio for the event, typically in the form ['const', '0'].
+  - `pitch_shift (list[str] | None)`: Optional pitch shift parameters for the event.
+  - `time_stretch (list[str] | None)`: Optional time stretch parameters for the event.
+  - `event_type (str | None)`: Optional type of the event (e.g., speakerA, speakerB, soundSource1).
+
 ```python
 from scaper.dscaper_datatypes import DscaperEvent
 event_metadata = DscaperEvent(..)
 ```
 ### Generating timelines
 Once you have added all the necessary background sounds and events to the timeline, you can generate the audio using the `generate_timeline` method. This method takes a `DscaperGenerate` instance as a parameter.
+it Represents the configuration and metadata for a soundscape generation process.
+
+Attributes of `DscaperGenerate`:
+  - `seed (int)`: Random seed used for reproducibility of the generation process. Default is 0.
+  - `ref_db (int)`: Reference decibel level for the generated audio. Default is -20.
+  - `reverb (float)`: Amount of reverb to apply to the generated audio. Default is 0.0.
+  - `save_isolated_events (bool)`: Whether to save isolated audio files for each event. Default is False.
+  - `save_isolated_eventtypes (bool)`: Whether to save isolated audio files for each event type. Default is False.
 
 ```python
 from scaper.dscaper_datatypes import DscaperGenerate
@@ -161,6 +209,33 @@ from scaper.dscaper_datatypes import DscaperGenerate
 generate_metadata = DscaperGenerate(...)
 dsc.generate_timeline("my_timeline", generate_metadata)
 ```
+
+### Dscaper class methods
+Here is a complete list of methods available in the `Dscaper` class:
+
+| Method | Description |
+|--------|-------------|
+| `get_dscaper_base_path()` | Returns the base path used for libraries and timelines. |
+| `store_audio(file, metadata, update=False)` | Store an audio file and its metadata in the library. Supports file upload and update. |
+| `read_audio(library, label, filename)` | Retrieve an audio file or its metadata from the library. |
+| `get_libraries()` | List all available audio libraries. |
+| `get_filenames(library, label)` | List all filenames within a specific library and label. |
+| `get_labels(library)` | List all labels within a specific library. |
+| `create_timeline(properties)` | Create a new timeline with specified properties. |
+| `add_background(name, properties)` | Add a background sound to a timeline. |
+| `add_event(name, properties)` | Add an event to a timeline. |
+| `generate_timeline(name, properties)` | Generate audio for a timeline using the provided generation parameters. |
+| `list_timelines()` | List all timelines and their metadata. |
+| `list_backgrounds(name)` | List all backgrounds in a specified timeline. |
+| `list_events(name)` | List all events in a specified timeline. |
+| `get_generated_timelines(name)` | List all generated outputs for a specified timeline. |
+| `get_generated_timeline_by_id(name, generate_id)` | Retrieve details of a specific generated output by its ID. |
+| `get_generated_file(name, generate_id, file_name)` | Download a specific generated file (audio or metadata) by name. |
+| `_get_distribution_tuple(distribution)` | Helper: Convert a distribution list to a tuple for Scaper compatibility. |
+| `_string_to_list(string)` | Helper: Convert a string representation of a list to a Python list. |
+
+
+
 
 ## Web API
 The dScaper Web API provides a RESTful interface for interacting with dScaper functionality over HTTP. The API is implemented in the `web/api` directory and allows you to manage libraries, timelines, audio files, and trigger audio generation remotely.
