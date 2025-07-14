@@ -50,10 +50,12 @@ def test_store_audio_and_read_audio(temp_lib_base):
     # Should fail on invalid audio file (non-existing file)
     resp = d.store_audio("non-existing-file.wav", metadata)
     assert resp.status == "error"
+    assert resp.status_code == 404
     # Should fail on invalid audio file (length)
     invalid_file = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "empty_audio.wav")
     resp = d.store_audio(invalid_file, metadata)
     assert resp.status == "error"
+    assert resp.status_code == 400
     # Should fail on invalid audio file (type)
     invalid_file2 = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "invalid_audio.wav")
     resp = d.store_audio(invalid_file2, metadata)
@@ -100,6 +102,11 @@ def test_store_audio_and_read_audio(temp_lib_base):
     resp5 = d.read_audio("lib1", "label1", "non-existing.json")
     assert resp5.status == "error"
     assert resp5.status_code == 404
+    # test reading file with not supported extension
+    test_lib_path = os.path.join(os.getcwd(), "tests", "data")
+    d2 = Dscaper(dscaper_base_path=test_lib_path)
+    resp6 = d2.read_audio("wrongtype", "mylabel", "audio.mp4")
+    assert resp6.status == "error"
 
 def test_get_libraries(temp_lib_base):
     test_lib_path = os.path.join(os.getcwd(), "tests", "data")
@@ -356,6 +363,15 @@ def test_generate_timeline(temp_lib_base):
     # get generated txt file
     gen_txt_resp = d.get_generated_file("timeline3", generated_data.id, "soundscape.txt")
     assert gen_txt_resp.status == "success"
+    # get generated timeline for invalid timeline folder
+    test_lib_path = os.path.join(os.getcwd(), "tests", "data")
+    d2 = Dscaper(dscaper_base_path=test_lib_path)
+    gen_resp4 = d2.get_generated_timeline_by_id("nodata", "some_id")
+    assert gen_resp4.status == "error"
+    # get generated file with invalid type
+    gen_file_resp4 = d2.get_generated_file("nodata", "some_id", "invalid_type.mp4")
+    assert gen_file_resp4.status == "error"
+
 
 def test__get_distribution_tuple(temp_lib_base):
     # const
