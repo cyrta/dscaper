@@ -10,10 +10,8 @@ import uuid
 import json
 import soundfile as sf
 from scaper.dscaper_datatypes import (
-    AudioMetadataSaveDTO,
     DscaperApiResponse,
-    AudioMetadata,
-    TimelineCreateDTO,
+    DscaperAudio,
     DscaperTimeline,
     DscaperBackground,
     DscaperEvent,
@@ -44,7 +42,7 @@ def test_store_audio_and_read_audio(temp_lib_base):
     d = Dscaper(dscaper_base_path=temp_lib_base)
     # Prepare dummy audio file (WAV header, not valid audio)
     # audio_bytes = b'RIFF$\x00\x00\x00WAVEfmt ' + b'\x10\x00\x00\x00\x01\x00\x01\x00' + b'\x40\x1f\x00\x00\x80>\x00\x00\x02\x00\x10\x00data\x00\x00\x00\x00'
-    metadata = AudioMetadataSaveDTO(
+    metadata = DscaperAudio(
         library="lib1",
         label="label1",
         filename="test.wav"
@@ -155,8 +153,8 @@ def test_get_filenames(temp_lib_base):
 
 def test_create_timeline_and_list_timelines(temp_lib_base):
     d = Dscaper(dscaper_base_path=temp_lib_base)
-    props = TimelineCreateDTO(duration=10.0, description="desc")
-    resp = d.create_timeline("timeline1", props)
+    props = DscaperTimeline(duration=10.0, description="desc", name="timeline1")
+    resp = d.create_timeline(props)
     assert resp.status == "success" 
     # Check if the timeline was created
     list_resp = d.list_timelines()
@@ -173,19 +171,19 @@ def test_create_timeline_and_list_timelines(temp_lib_base):
     assert "id" in timeline.model_dump()  # Check if ID is present
     assert "timestamp" in timeline.model_dump()  # Check if timestamp is present
     # check adding timeline with same name fails
-    resp2 = d.create_timeline("timeline1", props)
+    resp2 = d.create_timeline(props)
     assert resp2.status == "error"
     assert resp2.status_code == 400
 
 def test_add_background_and_list_backgrounds(temp_lib_base):
     d = Dscaper(dscaper_base_path=temp_lib_base)
     # Create a timeline first
-    props = TimelineCreateDTO(duration=10.0, description="desc")
-    resp = d.create_timeline("timeline1", props)
+    props = DscaperTimeline(duration=10.0, description="desc", name="timeline1")
+    resp = d.create_timeline(props)
     assert resp.status == "success"
     # Add audio
     audio_file = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "valid_audio.wav")
-    metadata = AudioMetadataSaveDTO(
+    metadata = DscaperAudio(
         library="my_lib",
         label="my_label",
         filename="audio.wav",
@@ -223,12 +221,12 @@ def test_add_background_and_list_backgrounds(temp_lib_base):
 def test_add_event_and_list_events(temp_lib_base):
     d = Dscaper(dscaper_base_path=temp_lib_base)
     # Create a timeline first
-    props = TimelineCreateDTO(duration=10.0, description="desc")
-    resp = d.create_timeline("timeline2", props)
+    props = DscaperTimeline(duration=10.0, description="desc", name="timeline2")
+    resp = d.create_timeline(props)
     assert resp.status == "success"
     # Add audio
     audio_file = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "valid_audio.wav")
-    metadata = AudioMetadataSaveDTO(
+    metadata = DscaperAudio(
         library="my_lib",
         label="my_label",
         filename="audio.wav",
@@ -268,12 +266,12 @@ def test_add_event_and_list_events(temp_lib_base):
 def test_generate_timeline(temp_lib_base):
     d = Dscaper(dscaper_base_path=temp_lib_base)
     # Create a timeline first
-    props = TimelineCreateDTO(duration=10.0, description="desc")
-    resp = d.create_timeline("timeline3", props)
+    props = DscaperTimeline(duration=10.0, description="desc", name="timeline3")
+    resp = d.create_timeline(props)
     assert resp.status == "success"
     # Add audio
     audio_file = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "valid_audio.wav")
-    metadata = AudioMetadataSaveDTO(
+    metadata = DscaperAudio(
         library="my_lib",
         label="my_label",
         filename="audio.wav",
@@ -412,16 +410,5 @@ def test__string_to_list(temp_lib_base):
     # assert d._string_to_list('["a", "b", "c"]') == ["a", "b", "c"]
     # assert d._string_to_list('"a"') == ["a"]
 
-def test_dscaper_web_response(temp_lib_base):
-    d = Dscaper(dscaper_base_path=temp_lib_base)
-    # Test DscaperWebResponse with DscaperJsonResponse
-    api_response = DscaperJsonResponse(status="success", content=json.dumps({"key": "value"}))
-    web_response = DscaperWebResponse(api_response)
-    assert web_response.status_code == 200
-    assert web_response.media_type == "application/json"    
-    # Test DscaperWebResponse with DscaperApiResponse
-    api_response2 = DscaperApiResponse(status="error", status_code=400, content="Bad Request")
-    web_response2 = DscaperWebResponse(api_response2)
-    assert web_response2.status_code == 400
-    assert web_response2.media_type == "text/plain"
+
 

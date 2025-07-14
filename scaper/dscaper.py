@@ -43,14 +43,14 @@ class Dscaper:
         return self.dscaper_base_path
     
 
-    def store_audio(self, file: Union[Annotated[bytes, File()], str], metadata: AudioMetadataSaveDTO, update: bool = False) -> DscaperApiResponse:
+    def store_audio(self, file: Union[Annotated[bytes, File()], str], metadata: DscaperAudio, update: bool = False) -> DscaperApiResponse:
         """
         Store audio file and its metadata.
         
         :param file: The audio file to be stored or a file path.
         :param metadata: Metadata for the audio file.
         :param update: If True, update the existing file, otherwise return an error if the file already exists.
-        :return: An AudioMetadata object containing the stored audio's metadata.
+        :return: An DscaperAudio object containing the stored audio's metadata.
         Exceptions:
             - 404: If the audio file does not exist.
             - 400: If the audio file is empty or invalid.
@@ -92,7 +92,7 @@ class Dscaper:
         # create the metadata object
         file_id = str(uuid.uuid4())
         timestamp = int(time.time())
-        metadata_obj = AudioMetadata(id=file_id, library=m.library, label=m.label, filename=m.filename,  
+        metadata_obj = DscaperAudio(id=file_id, library=m.library, label=m.label, filename=m.filename,  
                                 sandbox=m.sandbox, timestamp=timestamp, duration=duration)
         # save the metadata to the audio metadata path
         with open(metadata_destination, "w") as f:
@@ -108,7 +108,7 @@ class Dscaper:
         :param library: The library of the audio file.
         :param label: The label of the audio file.
         :param filename: The name of the audio file.
-        :return: An AudioMetadata object containing the audio's metadata or the audio file itself.
+        :return: An DscaperAudio object containing the audio's metadata or the audio file itself.
         Exceptions:
             - 404: If the audio file does not exist.
             - 400: If the audio file format is unsupported.
@@ -121,7 +121,7 @@ class Dscaper:
         if ext.lower() == ".json":
             with open(file, "r") as f:
                 metadata_json = f.read()
-            return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=AudioMetadata.model_validate_json(metadata_json).model_dump_json(), media_type="application/json")
+            return DscaperApiResponse(status="success", status_code=status.HTTP_200_OK, content=DscaperAudio.model_validate_json(metadata_json).model_dump_json(), media_type="application/json")
         # requesting audio file
         elif ext.lower() in [".wav", ".mp3", ".flac", ".ogg"]:
             with open(file, "rb") as f:
@@ -183,7 +183,7 @@ class Dscaper:
         return DscaperJsonResponse(content=json.dumps(labels))
 
 
-    def create_timeline(self, name: str, properties: TimelineCreateDTO) -> DscaperJsonResponse:
+    def create_timeline(self, properties: DscaperTimeline) -> DscaperJsonResponse:
         """Create a new timeline.
         
         :param name: The name of the timeline.
@@ -192,20 +192,20 @@ class Dscaper:
         Exceptions:
             - 400: If the timeline already exists.
         """
-        timeline_path = os.path.join(self.timeline_basedir, name)
+        p = properties
+        timeline_path = os.path.join(self.timeline_basedir, p.name)
         timeline_config = os.path.join(timeline_path, "timeline.json")
         # Check if the timeline already exists
         if os.path.exists(timeline_config):
-            return DscaperJsonResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content=json.dumps({"description": f"Timeline '{name}' already exists."}))
+            return DscaperJsonResponse(status="error", status_code=status.HTTP_400_BAD_REQUEST, content=json.dumps({"description": f"Timeline '{p.name}' already exists."}))
         # Create the directory if it does not exist
         os.makedirs(timeline_path, exist_ok=True)
         # Create the Timeline object
-        p = properties
         file_id = str(uuid.uuid4())
         timestamp = int(time.time())
         timeline = DscaperTimeline(
             id=file_id,
-            name=name,
+            name=p.name,
             duration=p.duration,
             description=p.description,
             sandbox=p.sandbox,

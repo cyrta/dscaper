@@ -1,37 +1,23 @@
 from pydantic import BaseModel, Json
-from typing import Any, Union
-from fastapi import Response
-import json
+from typing import Any
 
 
-
-class AudioMetadataSaveDTO(BaseModel):
+class DscaperAudio(BaseModel):
+    id: str = "" # set by the server
     library: str
     label: str
     filename: str
-    sandbox: str = "{}"  # JSON string
-
-class AudioMetadata(BaseModel):
-    id: str # set by the server
-    library: str
-    label: str
-    filename: str
-    sandbox: str # JSON string
-    timestamp: int # set by the server
-    duration: float # set by the server
-
-class TimelineCreateDTO(BaseModel):
-    duration: float = 0 
-    description: str = ""
-    sandbox: str = "{}"  # JSON string
+    sandbox: str = "{}"# JSON string
+    timestamp: int = 0# set by the server
+    duration: float = 0# set by the server
 
 class DscaperTimeline(BaseModel):
-    id: str # set by the server
+    id: str = "" # set by the server
     name: str 
     duration: float = 0  
     description: str = ""
     sandbox: str = "{}"  # JSON string
-    timestamp: int # set by the server
+    timestamp: int = 0# set by the server
 
 class DscaperTimelines(BaseModel):
     timelines: list[DscaperTimeline] = []
@@ -87,17 +73,7 @@ class DscaperJsonResponse(BaseModel):
     content: Json[Any]
     media_type: str = "application/json"
 
-class DscaperWebResponse(Response):
-    def __init__(self, api_response: Union[DscaperJsonResponse, DscaperApiResponse]):
-        if api_response.media_type is "application/json":
-            content = json.dumps(api_response.content)
-        else:
-            content = api_response.content
-        super().__init__(
-            content=content,
-            status_code=api_response.status_code,
-            media_type=api_response.media_type
-        )
+
 
 
       
