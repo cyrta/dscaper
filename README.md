@@ -163,3 +163,143 @@ dsc.generate_timeline("my_timeline", generate_metadata)
 ```
 
 ## Web API
+The dScaper Web API provides a RESTful interface for interacting with dScaper functionality over HTTP. The API is implemented in the `web/api` directory and allows you to manage libraries, timelines, audio files, and trigger audio generation remotely.
+
+### Audio API
+
+The Audio API provides endpoints for managing audio libraries, labels, and files. It allows you to upload, update, list, and retrieve audio files and their metadata.
+
+#### Endpoints
+
+- `POST /api/v1/audio/{library}/{label}/{filename}`  
+    Upload a new audio file and its metadata to a specific library and label.  
+    **Path parameters:**  
+      - `library` (str): The library to store the audio in.  
+      - `label` (str): The label for the audio file.  
+      - `filename` (str): The name of the audio file.  
+    **Request body (multipart/form-data):**  
+      - `file` (bytes): The audio file to be uploaded.  
+      - `sandbox` (str): JSON string containing sandbox data (metadata).  
+    Returns the stored audio's metadata.  
+    Errors: 400 if the file is empty/invalid or already exists.
+
+- `PUT /api/v1/audio/{library}/{label}/{filename}`  
+    Update an existing audio file and its metadata.  
+    **Path parameters:**  
+      - `library` (str): The library containing the audio.  
+      - `label` (str): The label of the audio file.  
+      - `filename` (str): The name of the audio file.  
+    **Request body (multipart/form-data):**  
+      - `file` (bytes): The new audio file to replace the existing one.  
+      - `sandbox` (str): JSON string containing updated sandbox data (metadata).  
+    Returns the updated audio's metadata.  
+    Errors: 400 if the file is empty/invalid or does not exist.
+
+- `GET /api/v1/audio/`  
+    List all available audio libraries.  
+    **Response:** List of library names.
+
+- `GET /api/v1/audio/{library}`  
+    List all labels within a specific library.  
+    **Path parameters:**  
+      - `library` (str): The library to get labels from.  
+    **Response:** List of label names.  
+    Errors: 404 if the library does not exist.
+
+- `GET /api/v1/audio/{library}/{label}`  
+    List all filenames within a specific label of a library.  
+    **Path parameters:**  
+      - `library` (str): The library to get filenames from.  
+      - `label` (str): The label to get filenames from.  
+    **Response:** List of filenames.  
+    Errors: 404 if the library or label does not exist.
+
+- `GET /api/v1/audio/{library}/{label}/{filename}`  
+    Retrieve metadata or the audio file itself for a given library, label, and filename.  
+    **Path parameters:**  
+      - `library` (str): The library of the audio file.  
+      - `label` (str): The label of the audio file.  
+      - `filename` (str): The name of the audio file or its metadata.  
+    **Response:** The audio file or its metadata.  
+    Errors: 404 if the audio file does not exist.
+
+All responses are wrapped in a standard response object. Errors such as missing files or libraries return appropriate HTTP status codes (e.g., 400, 404).
+
+### Timeline API
+The Timeline API provides endpoints for creating and managing timelines, adding backgrounds and events, and generating audio. Each timeline represents a sequence of audio events and backgrounds, which can be generated into audio files.
+
+#### Endpoints
+
+- `POST /api/v1/timeline/{timeline_name}`  
+    Create a new timeline with the specified name and properties.  
+    **Path parameters:**  
+      - `timeline_name` (str): The name of the timeline to create.  
+    **Request body (application/json):**  
+      - `duration` (float): Duration of the timeline in seconds.  
+      - `description` (str, optional): Description of the timeline.  
+      - `sandbox` (dict, optional): Additional metadata or sandbox data.  
+    **Response:** Confirmation and details of the created timeline.
+
+- `POST /api/v1/timeline/{timeline_name}/background`  
+    Add a background sound to the specified timeline.  
+    **Path parameters:**  
+      - `timeline_name` (str): The name of the timeline.  
+    **Request body (application/json):**  
+      - Background properties as defined by `DscaperBackground`.  
+    **Response:** Confirmation and details of the added background.
+
+- `POST /api/v1/timeline/{timeline_name}/event`  
+    Add an event to the specified timeline.  
+    **Path parameters:**  
+      - `timeline_name` (str): The name of the timeline.  
+    **Request body (application/json):**  
+      - Event properties as defined by `DscaperEvent`.  
+    **Response:** Confirmation and details of the added event.
+
+- `POST /api/v1/timeline/{timeline_name}/generate`  
+    Generate audio for the specified timeline using provided generation parameters.  
+    **Path parameters:**  
+      - `timeline_name` (str): The name of the timeline.  
+    **Request body (application/json):**  
+      - Generation parameters as defined by `DscaperGenerate`.  
+    **Response:** Confirmation and details of the generation process.
+
+- `GET /api/v1/timeline/`  
+    List all available timelines.  
+    **Response:** List of timeline names and metadata.
+
+- `GET /api/v1/timeline/{timeline_name}/background`  
+    List all backgrounds in the specified timeline.  
+    **Path parameters:**  
+      - `timeline_name` (str): The name of the timeline.  
+    **Response:** List of backgrounds.
+
+- `GET /api/v1/timeline/{timeline_name}/event`  
+    List all events in the specified timeline.  
+    **Path parameters:**  
+      - `timeline_name` (str): The name of the timeline.  
+    **Response:** List of events.
+
+- `GET /api/v1/timeline/{timeline_name}/generate`  
+    List all generated outputs for the specified timeline.  
+    **Path parameters:**  
+      - `timeline_name` (str): The name of the timeline.  
+    **Response:** List of generated outputs.
+
+- `GET /api/v1/timeline/{timeline_name}/generate/{generate_id}`  
+    Retrieve details of a specific generated output by its ID.  
+    **Path parameters:**  
+      - `timeline_name` (str): The name of the timeline.  
+      - `generate_id` (str): The ID of the generated output.  
+    **Response:** Details of the generated output.
+
+- `GET /api/v1/timeline/{timeline_name}/generate/{generate_id}/{file_name}`  
+    Download a specific generated file (e.g., audio or metadata) by name.  
+    **Path parameters:**  
+      - `timeline_name` (str): The name of the timeline.  
+      - `generate_id` (str): The ID of the generated output.  
+      - `file_name` (str): The name of the file to download.  
+    **Response:** The requested file or its metadata.
+
+All endpoints return responses wrapped in a standard response object. Errors such as missing timelines or invalid parameters return appropriate HTTP status codes.
+"""
