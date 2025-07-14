@@ -1,20 +1,27 @@
 from setuptools import setup
-import imp
+import importlib.util
+import sys
+
+spec = importlib.util.spec_from_file_location('scaper.version', 'scaper/version.py')
+if spec is None or spec.loader is None:
+    raise ImportError("Could not load spec or loader for 'scaper.version'")
+version = importlib.util.module_from_spec(spec)
+sys.modules['scaper.version'] = version
+spec.loader.exec_module(version)
 
 
 with open('README.md') as file:
     long_description = file.read()
 
-version = imp.load_source('scaper.version', 'scaper/version.py')
 
 setup(
     name='scaper',
     version=version.version,
     description='A library for soundscape synthesis and augmentation',
-    author='Justin Salamon & Duncan MacConnell',
+    author='Justin Salamon, Duncan MacConnell, David Grünert',
     author_email='justin.salamon@gmail.com',
-    url='https://github.com/justinsalamon/scaper',
-    download_url='http://github.com/justinsalamon/scaper/releases',
+    url='https://github.com/cyrta/dscaper',
+    download_url='',
     packages=['scaper'],
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -23,22 +30,17 @@ setup(
     classifiers=[
             "License :: OSI Approved :: BSD License",
             "Programming Language :: Python",
-            "Development Status :: 3 - Alpha",
+            "Development Status :: 1 - Alpha",
             "Intended Audience :: Developers",
             "Intended Audience :: Science/Research",
             "Topic :: Multimedia :: Sound/Audio :: Analysis",
             "Topic :: Multimedia :: Sound/Audio :: Sound Synthesis",
-            "Programming Language :: Python :: 2",
-            "Programming Language :: Python :: 2.7",
-            "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.4",
-            "Programming Language :: Python :: 3.5",
-            "Programming Language :: Python :: 3.6",
+            "Programming Language :: Python :: 3.12",
         ],
     install_requires=[
         'sox==1.4.0',
         'jams>=0.3.2',
-        'numpy>=1.13.3',
+        'numpy>=2.3.1',
         "soxbindings>=1.2.2;platform_system!='Windows'",
         'pyloudnorm',
         'soundfile',
