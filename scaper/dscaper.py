@@ -7,6 +7,8 @@ import os
 import time
 import soundfile
 import json
+import zipfile
+import io
 
 
 DSCAPER_DEFAULT_BASE_PATH = os.path.join(os.getcwd(), "data")
@@ -586,6 +588,41 @@ class Dscaper:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 content="Unsupported file format"
             )
+        
+    def get_generated_files(self, timeline_name: str, generate_id: str) -> DscaperApiResponse:
+        """Get all generated files from the timeline.
+        
+        :param timeline_name: The name of the timeline.
+        :param generate_id: The ID of the generated timeline.
+        :return: A list of generated files or an error response if not found.
+        Exceptions:
+            - 404: If the timeline or generated files do not exist.
+        """
+        timeline_path = os.path.join(self.timeline_basedir, timeline_name)
+        generate_dir = os.path.join(timeline_path, "generate", generate_id)
+        # Check if the timeline exists
+        if not os.path.exists(generate_dir):
+            return DscaperApiResponse(
+                status="error",
+                status_code=status.HTTP_404_NOT_FOUND,
+                content=f"Timeline '{timeline_name}' or generated timeline with ID '{generate_id}' does not exist."
+            )
+        # compress the folder into a zip file
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(generate_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    zipf.write(file_path, os.path.relpath(file_path, generate_dir))
+        # Return the zip file as a response
+        zip_buffer.seek(0)
+        zip_data = zip_buffer.read()
+        return DscaperApiResponse(
+            status="success",
+            status_code=status.HTTP_200_OK,
+            content=zip_data,
+            media_type="application/zip"
+        )
 
 
     # Helper functions to convert distributions

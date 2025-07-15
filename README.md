@@ -197,6 +197,22 @@ if resp.status == "success":
     print(content.generated_files)  
 ```
 
+You can also download all generated files as archive using `get_generated_files`. This method takes the timeline name and the generated ID as parameters. It returns a `DscaperJsonResponse` object containing the archive file.
+
+```python
+resp = dsc.get_generated_files("restaurant_timeline", id)
+if resp.status == "success":
+    filename = f"generated_files_{id}.zip"
+    with open(filename, 'wb') as f:
+        if resp.content is not None:
+            if isinstance(resp.content, bytes):
+                f.write(resp.content)
+            else:
+                raise TypeError("resp.content is not of type bytes")
+        else:
+            print("No content to write to file.")
+```          
+
 ### dScaper class methods
 Here is a complete list of the methods available in the `Dscaper` class. Most methods return a `DscaperJsonResponse` object, which contains the result of the operation and any relevant metadata. It has the following attributes:
 
@@ -427,7 +443,7 @@ Timelines define the structure of the generated audio. They are organized as fol
     └── [timeline_2_name]
         └── [...]
 ```
-When generating with `save_isolated_eventtypes` set to `True`, an additional subfolder `soundscape_eventtypes` is created in the `generate` folder. The structure is as follows:
+When generating with `save_isolated_eventtypes` set to `True`, an additional subfolder `soundscape_eventtypes` is created in the `[generation_id]` folder. The structure is as follows:
 
 
 ```
@@ -436,11 +452,11 @@ When generating with `save_isolated_eventtypes` set to `True`, an additional sub
        │    ├── generate.json 
        │    ├── soundscape.wav - complete soundscape with all events
        │    ├── ..
-       │    ├── soundscape_eventtypes
-       │    │    ├── [event_type_1].wav - soundscape with only events of type 1
-       │    │    ├── [event_type_2].wav - soundscape with only events of type 2
-       │    │    ├── [...]
-       │    │    └── no_type.wav - soundscape with all events that do not have an event type assigned
+       │    └── soundscape_eventtypes
+       │         ├── [event_type_1].wav - soundscape with only events of type 1
+       │         ├── [event_type_2].wav - soundscape with only events of type 2
+       │         ├── [...]
+       │         └── no_type.wav - soundscape with all events that do not have an event type assigned
        └── [...]
 ```
-You also generate with `save_isolated_events` set to `True`. In this case, a separate audio file is created for each event in the soundscape. The audio files are stored in a subfolder `soundscape_events` within the `generate` folder. 
+You can also generate with `save_isolated_events` set to `True`. In this case, a separate audio file is created for each event in the soundscape. The audio files are stored in a subfolder `soundscape_events` within the `[generation_id]` folder. 
