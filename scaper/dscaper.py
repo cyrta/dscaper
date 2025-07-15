@@ -641,9 +641,11 @@ class Dscaper:
             return_tuple = (dist_type, value)
             # check if value is a number or a string
             if isinstance(value, str):
-                if value.isnumeric():
+                if value.isnumeric() or self._isfloat(value):
+                    # print("its a number", value)
                     return_tuple = (dist_type, float(value))
                 else:
+                    # print("its a string", value)
                     return_tuple = (dist_type, value)
             else:
                 raise ValueError("Constant distribution value must be a number or a string.")
@@ -681,3 +683,10 @@ class Dscaper:
         output_list = [s.strip() for s in string.split(',') if s.strip()]
         # print(f"*** Converting string to list: {string} to {output_list}")
         return output_list
+    
+    def _isfloat(self, str):
+        try: 
+            float(str)
+        except ValueError: 
+            return False
+        return True
