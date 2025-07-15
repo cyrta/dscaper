@@ -31,7 +31,7 @@ dScaper can eighter be use as python module or as separate server. In both varia
 
 The main features of dScaper are:
 - **Audio library management**: dScaper allows you to store and manage audio files in a structured way. Audio files are organized into libraries and labels, making it easy to retrieve and use them in multiple timelines.
-- **Timeline management**: dScaper allows you to create and manage timelines, which define the structure of the generated audio. Timelines can include background sounds and events, which are used to generate the final audio output.dScaper supports the same distributions for sampling as the original Scaper library.
+- **Timeline management**: dScaper allows you to create and edit timelines, which define the structure of the generated audio including background sounds and events. dScaper supports the same distributions for sampling as the original Scaper library.
 - **Audio generation**: dScaper can generate multiple version of a timeline. It stores the generated audio files along with their metadata making it easy to retrieve and compare them later.
 - **Web API and Python API**: dScaper provides a RESTful Web API and a Python API. The web API allows to use dScaper as a standalone server simplifying integration and scaling of pipelines.
 - **Event types**: dScaper supports event types, allowing you to categorize events in the timeline. This is useful for generating audio for multiple speakers or sound sources in a single timeline. It allows to apply different post-processings, e.g. applying different room accoustics to different speakers and sound sources.
@@ -93,7 +93,7 @@ import scaper
 dsc = scaper.Dscaper(dscaper_base_path="/path/to/dscaper/data")
 ```
 
-dScaper will create two subfolders in the specified path: `libraries` and `timelines` if they do not already exist. 
+dScaper will create two subfolders `libraries` and `timelines` in the specified path if they do not already exist. 
 
 ```/path/to/dscaper/data/
 ├── libraries
@@ -101,76 +101,25 @@ dScaper will create two subfolders in the specified path: `libraries` and `timel
 └── timelines
     └── [timeline_data...]
 ```
-Librarys are used to store audio files and their metadata. They are organized as follows: 
-
-```/path/to/dscaper/data/
-└── libraries
-    ├── [library_1_name]
-    │   ├── [label_1]
-    │   │   ├── [audio_file_1.wav]
-    │   │   ├── [audio_file_1.json]
-    │   │   ├── [audio_file_2.wav]  
-    │   │   └── [...]   
-    │   ├── [label_2]
-    │   │   ├── [audio_file_2.wav]
-    │   │   └── [audio_file_2.json]
-    │   └── [...]
-    └── [library_2_name]
-        └── [...]
-```
-Timelines define the structure of the generated audio. They are organized as follows:
-```
-└── timelines
-    ├── [timeline_1_name]
-    │   ├── timeline.json
-    │   ├── background
-    │   │   ├── [background_1_id].json
-    │   │   ├── [background_2_id].json
-    │   │   └── [...]
-    │   ├── events
-    │   │   ├── [event_1_id].json
-    │   │   ├── [event_2_id].json
-    │   │   └── [...]
-    │   └── generate
-    │       ├── [generation_1_id]
-    │       │    ├── generate.json
-    │       │    ├── soundscape.wav
-    │       │    ├── soundscape.jams
-    │       │    └── soundscape.text
-    │       └── [...]
-    └── [timeline_2_name]
-        └── [...]
-```
-When generating with `save_isolated_eventtypes` set to `True`, an additional subfolder `soundscape_eventtypes` is created in the `generate` folder. The structure is as follows:
-
-
-```
-   └── generate
-       ├── [generation_1_id]
-       │    ├── generate.json 
-       │    ├── soundscape.wav - complete soundscape with all events
-       │    ├── ..
-       │    ├── soundscape_eventtypes
-       │    │    ├── [event_type_1].wav - soundscape with only events of type 1
-       │    │    ├── [event_type_2].wav - soundscape with only events of type 2
-       │    │    ├── [...]
-       │    │    └── no_type.wav - soundscape with all events that do not have an event type assigned
-       └── [...]
-```
-You also generate with `save_isolated_events` set to `True`. In this case, a separate audio file is created for each event in the soundscape. The audio files are stored in a subfolder `soundscape_events` within the `generate` folder. 
-
+The librarys folder is used to store the input audio files and their metadata. The timeline folder contains the definition and the resulting audio of the generated timelines. Further details of the folder structure can be found in the [Folder structure](#folder-structure) section below.
 
 ### Adding audio files to the library
 
-You can add audio files to the dScaper library using the `store_audio` method. This method takes a file path and metadata as parameters. The metadata should be an instance of `DscaperAudio`.
+You can add audio files to the dScaper library using the `store_audio` method. This method takes a file path and metadata as parameters. The metadata should be an instance of `DscaperAudio`. It defines library, label, and filename for storing the audio file. As most methods in dScaper, it returns a `DscaperJsonResponse` object that contains the result of the operation. More details about the `DscaperJsonResponse` can be found in the [Dscaper class methods](#dscaper-class-methods) section below.
 
 ```python
 from scaper.dscaper_datatypes import DscaperAudio
 
 file_path = "/path/to/audio/file.wav"
 metadata = DscaperAudio(library="my_library", label="my_label", filename="my_file.wav")
-dsc.store_audio(file_path, metadata)
+resp = dsc.store_audio(file_path, metadata)
+
+if (resp.status == "success"):
+    print("Audio file stored successfully.")
+else:
+    print(f"Error storing audio file: {resp.content}")
 ```
+
 ### Assemble timelines
 To assemble a timeline, you first create an empty timeline using the `create_timeline` method. This method takes a `DscaperTimeline` instance as a parameter which allows you to specify the name, duration, and description of the timeline. The name of the timeline should be unique and will be used to reference the timeline later. dScaper will refuse to create a timeline with the same name as an existing one.
 
@@ -180,14 +129,14 @@ from scaper.dscaper_datatypes import DscaperTimeline
 timeline_metadata = DscaperTimeline(name="my_timeline", duration=10.0, description="Test timeline")
 dsc.create_timeline(timeline_metadata)
 ```
-Now you can add background sounds and events to the timeline. Background sounds are added using the `add_background` method that takes a `DscaperBackground` instance as a parameter. DscaperBackground represents a background audio element in the Dscaper system. Paramters of type `list[str]` are used to represent distributions in the format described in the [Distribution lists](#distribution-lists) section below.
+Now you can add background sounds and events to the timeline. Background sounds are added using the `add_background` method that takes a `DscaperBackground` instance as a parameter. Paramters of type `list[str]` are used to represent distributions in the format described in the [Distribution lists](#distribution-lists) section below.
 
 
 Attributes of `DscaperBackground`:
   - `library (str)`: The name of the audio library from which the background is sourced.
-  - `label (list[str])`: The label(s) describing the background audio. Defaults to `['choose', '[]']`.
-  - `source_file (list[str])`: The file(s) from which the background audio is taken. Defaults to `['choose', '[]']`.
-  - `source_time (list[str])`: The time specification for the source audio. Defaults to `['const', '0']`.
+  - `label (list[str])`: The label(s) describing the background audio. Defaults to `['choose', '[]']` which will randomly choose one label in the library.
+  - `source_file (list[str])`: The file(s) from which the background audio is taken. Defaults to `['choose', '[]']` which will randomly choose one file in the library.
+  - `source_time (list[str])`: The time specification for the source audio. Defaults to `['const', '0']` which means the background starts at the beginning of the source file.
 
 
 ```python
@@ -197,19 +146,19 @@ background_metadata = DscaperBackground(..)
 dsc.add_background("my_timeline", background_metadata)
 ```
 
-Events are added using the `add_event` method that takes a `DscaperEvent` instance as a parameter. DscaperEvent represents a single event in a soundscape timeline. Paramters of type `list[str]` are used to represent distributions in the format described in the [Distribution lists](#distribution-lists) section below.
+Events are added using the `add_event` method that takes a `DscaperEvent` instance as a parameter. Again, paramters of type `list[str]` represent distributions (see [Distribution lists](#distribution-lists)). 
 
 Attributes of `DscaperEvent`:
   - `library (str)`: The name of the audio library from which the event is sourced.
-  - `label (list[str])`: The label or category for the event, typically in the form `['choose', '[]']`.
-  - `source_file (list[str])`: The source audio file for the event, typically in the form `['choose', '[]']`.
-  - `source_time (list[str])`: The start time within the source file, typically in the form `['const', '0']`.
-  - `event_time (list[str])`: The time at which the event occurs in the timeline, typically in the form `['const', '0']`.
-  - `event_duration (list[str])`: The duration of the event, typically in the form `['const', '5']`.
+  - `label (list[str])`: The label from which the event is sourced. Defaults to `['choose', '[]']` which will randomly choose one label in the library.
+  - `source_file (list[str])`: The source audio file for the event, typically in the form `['choose', '[]']` which will randomly choose one file in the library.
+  - `source_time (list[str])`: The start time within the source file, typically in the form `['const', '0']` which means the event starts at the beginning of the source file.
+  - `event_time (list[str])`: The time at which the event occurs in the timeline, typically in the form `['const', '0']` which means the event starts at the beginning of the timeline.
+  - `event_duration (list[str])`: The duration of the event, typically in the form `['const', '5']` which means the event lasts for 5 seconds.
   - `snr (list[str])`: The signal-to-noise ratio for the event, typically in the form `['const', '0']`.
   - `pitch_shift (list[str] | None)`: Optional pitch shift parameters for the event. Defaults to `None`.
   - `time_stretch (list[str] | None)`: Optional time stretch parameters for the event. Defaults to `None`.
-  - `event_type (str | None)`: Optional type of the event (e.g., speakerA, speakerB, soundSource1). Defaults to `None`.
+  - `event_type (str | None)`: Optional type of the event (e.g., speakerA, speakerB, soundSource1). Defaults to `None`. This allows you to categorize events in the timeline and write them to separate audio files when generating the timeline. This is useful for applying different post-processings, e.g. applying different room acoustics to different speakers and sound sources.
 
 ```python
 from scaper.dscaper_datatypes import DscaperEvent
@@ -219,7 +168,7 @@ dsc.add_event("my_timeline", event_metadata)
 ```
 ### Generating timelines
 Once you have added all the necessary background sounds and events to the timeline, you can generate the audio using the `generate_timeline` method. This method takes a `DscaperGenerate` instance as a parameter.
-It represents the configuration and metadata for a soundscape generation process.
+It represents the configuration and metadata for a soundscape generation process. The method returns a `DscaperJsonResponse` object containing the ID of the generated timeline. This ID is used to reference the generated audio later.
 
 Attributes of `DscaperGenerate`:
   - `seed (int)`: Random seed used for reproducibility of the generation process. Default is 0.
@@ -232,11 +181,24 @@ Attributes of `DscaperGenerate`:
 from scaper.dscaper_datatypes import DscaperGenerate
 
 generate_metadata = DscaperGenerate(...)
-dsc.generate_timeline("my_timeline", generate_metadata)
+resp = dsc.generate_timeline("my_timeline", generate_metadata)
+
+content = DscaperGenerate(**resp.content)
+print("ID:",content.id)  
 ```
 
-### Dscaper class methods
-Here is a complete list of methods available in the `Dscaper` class. Most methods return a `DscaperJsonResponse` object, which contains the result of the operation and any relevant metadata. It has the following attributes:
+### Reading generated timelines
+You can retrieve the generated audio and metadata using the `get_generated_timeline_by_id` method. This method takes the timeline name and the generated ID as parameters. It returns a `DscaperJsonResponse` object containing the generated audio and metadata.
+
+```python
+resp = dsc.get_generated_timeline_by_id("my_timeline", content.id)
+if resp.status == "success":
+    content = DscaperGenerate(**resp.content)
+    print(content.generated_files)  
+```
+
+### dScaper class methods
+Here is a complete list of the methods available in the `Dscaper` class. Most methods return a `DscaperJsonResponse` object, which contains the result of the operation and any relevant metadata. It has the following attributes:
 
 - `status`: The status of the operation (e.g., "success", "error").
 - `status_code`: The HTTP status code of the response (e.g., 200, 400).
@@ -423,3 +385,62 @@ dScaper supports the same distributions as the original Scaper library. Instead 
 - `['truncnorm', mean, std, min, max]`: Truncated normal distribution with specified `mean`, `std`, and limits between `min` and `max`.
 
 If you use an empty list `[]`, it is interpreted as a distribution that samples from all available values. For example, if you specify `['choose', '[]']` for the label, it will sample from all available values in the library.
+
+## Folder structure
+The dScaper library and timelines are stored in the `libraries` and `timelines` directories, respectively. The structure for `libraries` is as follows:
+
+```/path/to/dscaper/data/
+└── libraries
+    ├── [library_1_name]
+    │   ├── [label_1]
+    │   │   ├── [audio_file_1.wav]
+    │   │   ├── [audio_file_1.json]
+    │   │   ├── [audio_file_2.wav]  
+    │   │   └── [...]   
+    │   ├── [label_2]
+    │   │   ├── [audio_file_2.wav]
+    │   │   └── [audio_file_2.json]
+    │   └── [...]
+    └── [library_2_name]
+        └── [...]
+```
+Timelines define the structure of the generated audio. They are organized as follows:
+```
+└── timelines
+    ├── [timeline_1_name]
+    │   ├── timeline.json
+    │   ├── background
+    │   │   ├── [background_1_id].json
+    │   │   ├── [background_2_id].json
+    │   │   └── [...]
+    │   ├── events
+    │   │   ├── [event_1_id].json
+    │   │   ├── [event_2_id].json
+    │   │   └── [...]
+    │   └── generate
+    │       ├── [generation_1_id]
+    │       │    ├── generate.json
+    │       │    ├── soundscape.wav
+    │       │    ├── soundscape.jams
+    │       │    └── soundscape.text
+    │       └── [...]
+    └── [timeline_2_name]
+        └── [...]
+```
+When generating with `save_isolated_eventtypes` set to `True`, an additional subfolder `soundscape_eventtypes` is created in the `generate` folder. The structure is as follows:
+
+
+```
+   └── generate
+       ├── [generation_1_id]
+       │    ├── generate.json 
+       │    ├── soundscape.wav - complete soundscape with all events
+       │    ├── ..
+       │    ├── soundscape_eventtypes
+       │    │    ├── [event_type_1].wav - soundscape with only events of type 1
+       │    │    ├── [event_type_2].wav - soundscape with only events of type 2
+       │    │    ├── [...]
+       │    │    └── no_type.wav - soundscape with all events that do not have an event type assigned
+       └── [...]
+```
+You also generate with `save_isolated_events` set to `True`. In this case, a separate audio file is created for each event in the soundscape. The audio files are stored in a subfolder `soundscape_events` within the `generate` folder. 
