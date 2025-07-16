@@ -1564,7 +1564,11 @@ class Scaper(object):
             source_file_tuple[1] = source_files
             source_file_tuple = tuple(source_file_tuple)
         else:
-            source_file_tuple = event.source_file
+            if not event.library is None:
+                source_with_path = os.path.join(file_path, label, event.source_file[1])
+                source_file_tuple = (event.source_file[0],source_with_path)
+            else:
+                source_file_tuple = event.source_file
 
         source_file = _get_value_from_dist(source_file_tuple, self.random_state)
 
