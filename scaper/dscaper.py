@@ -326,6 +326,8 @@ class Dscaper:
             bg_path=None,  # bg_path is not used in this context
             random_state=properties.seed
         )
+        # TODO: add to the properties
+        sc.ref_db = -20  # Set the reference dB level
         # add backgrounds
         for bg in os.listdir(os.path.join(timeline_path, "background")):
             # print(f"*** Processing background: {bg}")
@@ -684,9 +686,11 @@ class Dscaper:
         # print(f"*** Converting string to list: {string} to {output_list}")
         return output_list
     
-    def _isfloat(self, str):
-        try: 
-            float(str)
-        except ValueError: 
+    def _isfloat(self, string):
+        if not isinstance(string, str):
+            return False
+        try:
+            float(string)
+        except ValueError:
             return False
         return True

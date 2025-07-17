@@ -284,6 +284,13 @@ def test_generate_timeline(temp_lib_base):
         filename="audio.wav",
     )
     resp = d.store_audio(audio_file, metadata)
+    audio_file = os.path.join(os.getcwd(), "tests", "data", "library_inputs", "valid_audio.wav")
+    metadata = DscaperAudio(
+        library="my_lib",
+        label="my_label2",
+        filename="audio2.wav",
+    )
+    resp = d.store_audio(audio_file, metadata)
     assert resp.status == "success"
     # add background
     bg = DscaperBackground(library="my_lib")
@@ -294,6 +301,15 @@ def test_generate_timeline(temp_lib_base):
     resp = d.add_event("timeline3", ev)
     assert resp.status == "success"
     ev = DscaperEvent(library="my_lib",event_type="speakerB")
+    resp = d.add_event("timeline3", ev)
+    assert resp.status == "success"
+    # add event with const label and source file
+    ev = DscaperEvent(
+        library="my_lib",
+        label=["const", "my_label2"],
+        source_file=["const", "audio2.wav"],
+        event_type="speakerA"
+    )
     resp = d.add_event("timeline3", ev)
     assert resp.status == "success"
     # generate timeline
@@ -371,6 +387,14 @@ def test_generate_timeline(temp_lib_base):
     # get generated file with invalid type
     gen_file_resp4 = d2.get_generated_file("nodata", "some_id", "invalid_type.mp4")
     assert gen_file_resp4.status == "error"
+    # get archive of generated files 
+    gen_archive_resp = d.get_generated_files("timeline3", generated_data.id)
+    assert gen_archive_resp.status == "success"
+    assert isinstance(gen_archive_resp.content, bytes)
+    # get archive of generated files from non-existing timeline
+    gen_archive_resp2 = d.get_generated_files("non-existing-timeline", generated_data.id)
+    assert gen_archive_resp2.status == "error"
+    assert gen_archive_resp2.status_code == 404
 
 
 def test__get_distribution_tuple(temp_lib_base):
@@ -425,6 +449,16 @@ def test__string_to_list(temp_lib_base):
     # Test with quotes
     # assert d._string_to_list('["a", "b", "c"]') == ["a", "b", "c"]
     # assert d._string_to_list('"a"') == ["a"]
+
+def test__isfloat(temp_lib_base):
+    d = Dscaper(dscaper_base_path=temp_lib_base)
+    assert d._isfloat("3.14") is True
+    assert d._isfloat("0.001") is True
+    assert d._isfloat("-2.5") is True
+    assert d._isfloat("abc") is False
+    assert d._isfloat("123") is True  # Integers are not considered floats in this context
+    assert d._isfloat("") is False
+    assert d._isfloat(None) is False
 
 
 
