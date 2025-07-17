@@ -84,10 +84,10 @@ async def get_generated_timeline(timeline_name: str):
 
 @api_router.get("/{timeline_name}/generate/{generate_id}")
 async def get_generated_timeline_by_id(timeline_name: str, generate_id: str):
-    """Get the generated timeline by ID.
+    """Get the generated timeline by ID. Returns an archive of all generated files.
     :return: The generated timeline.
     """
-    response = timeline_service.get_generated_timeline_by_id(timeline_name, generate_id)
+    response = timeline_service.get_generated_files(timeline_name, generate_id)
     return DscaperWebResponse(response)
 
 @api_router.get("/{timeline_name}/generate/{generate_id}/{file_name}")

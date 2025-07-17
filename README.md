@@ -16,11 +16,12 @@ alternative API for accessing Scaper that is optimized for the usage in pipeline
   - [Adding audio files to the library](#adding-audio-files-to-the-library)
   - [Assemble timelines](#assemble-timelines)
   - [Generating timelines](#generating-timelines)
-  - [Dscaper class methods](#dscaper-class-methods)
+  - [dScaper class methods](#dscaper-class-methods)
 - [Web API](#web-api)
   - [Audio API](#audio-api)
   - [Timeline API](#timeline-api)
 - [Distribution lists](#distribution-lists)
+- [Folder structure](#folder-structure)
 
 
 ## Architecture and key features
@@ -240,6 +241,7 @@ Here is a complete list of the methods available in the `Dscaper` class. Most me
 | `get_generated_timelines(timeline_name)` | List all generated outputs for a specified timeline. Returns a `DscaperJsonResponse`. Content is of type `DscaperGenerations`.|
 | `get_generated_timeline_by_id(timeline_name, generate_id)` | Retrieve details of a specific generated output by its ID. Returns a `DscaperJsonResponse`. Content is of type `DscaperGenerate` and contains all data stored. |
 | `get_generated_file(timeline_name, generate_id, file_name)` | Download a specific generated file (audio or metadata) by name. Returns a `DscaperJsonResponse`. Content is of type `DscaperGenerate` and contains all data stored. |
+| `get_generated_files(timeline_name, generate_id)` | Download all generated files as an archive. Returns a `DscaperJsonResponse`. Content is of type `bytes` containing the archive data (zip). |
 
 
 ## Web API
@@ -373,7 +375,7 @@ The Timeline API provides endpoints for creating and managing timelines, adding 
     **Response:** List of generated outputs.
 
 - `GET /api/v1/timeline/{timeline_name}/generate/{generate_id}`  
-    Retrieve details of a specific generated output by its ID.  
+    Retrieve all files generated for a specific timeline by its ID as an archive.
     **Path parameters:**  
       - `timeline_name` (str): The name of the timeline.  
       - `generate_id` (str): The ID of the generated output.  
@@ -454,7 +456,9 @@ When generating with `save_isolated_eventtypes` set to `True`, an additional sub
        │    ├── ..
        │    └── soundscape_eventtypes
        │         ├── [event_type_1].wav - soundscape with only events of type 1
+       │         ├── [event_type_1].jams - JAMS file for event type 1    
        │         ├── [event_type_2].wav - soundscape with only events of type 2
+       │         ├── [event_type_2].jams - JAMS file for event type 2
        │         ├── [...]
        │         └── no_type.wav - soundscape with all events that do not have an event type assigned
        └── [...]
