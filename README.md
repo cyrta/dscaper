@@ -158,7 +158,8 @@ Attributes of `DscaperEvent`:
   - `source_file (list[str])`: The source audio file for the event, typically in the form `['choose', '[]']` which will randomly choose one file in the library.
   - `source_time (list[str])`: The start time within the source file, typically in the form `['const', '0']` which means the event starts at the beginning of the source file.
   - `event_time (list[str])`: The time at which the event occurs in the timeline, typically in the form `['const', '0']` which means the event starts at the beginning of the timeline.
-  - `event_duration (list[str])`: The duration of the event, typically in the form `['const', '5']` which means the event lasts for 5 seconds.
+  - `event_duration (list[str]) | None`: The duration of the event. Can be set to `None` to use the duration of the source file, or specified as a distribution like `['const', '5']` which means the event lasts for 5 seconds. If not set and no source file is specified, it defaults to `['const', '5']`.
+  , typically in the form `['const', '5']` which means the event lasts for 5 seconds.
   - `snr (list[str])`: The signal-to-noise ratio for the event, typically in the form `['const', '0']`.
   - `pitch_shift (list[str] | None)`: Optional pitch shift parameters for the event. Defaults to `None`.
   - `time_stretch (list[str] | None)`: Optional time stretch parameters for the event. Defaults to `None`.
