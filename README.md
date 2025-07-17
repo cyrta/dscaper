@@ -15,6 +15,8 @@ alternative API for accessing Scaper that is optimized for the usage in pipeline
 - [Python API](#python-api)
   - [Adding audio files to the library](#adding-audio-files-to-the-library)
   - [Assemble timelines](#assemble-timelines)
+    - [Adding background sounds](#adding-background-sounds)
+    - [Adding events](#adding-events)
   - [Generating timelines](#generating-timelines)
   - [dScaper class methods](#dscaper-class-methods)
 - [Web API](#web-api)
@@ -130,8 +132,8 @@ from scaper.dscaper_datatypes import DscaperTimeline
 timeline_metadata = DscaperTimeline(name="my_timeline", duration=10.0, description="Test timeline")
 dsc.create_timeline(timeline_metadata)
 ```
+#### Adding background sounds
 Now you can add background sounds and events to the timeline. Background sounds are added using the `add_background` method that takes a `DscaperBackground` instance as a parameter. Paramters of type `list[str]` are used to represent distributions in the format described in the [Distribution lists](#distribution-lists) section below.
-
 
 Attributes of `DscaperBackground`:
   - `library (str)`: The name of the audio library from which the background is sourced.
@@ -146,6 +148,7 @@ from scaper.dscaper_datatypes import DscaperBackground
 background_metadata = DscaperBackground(..)
 dsc.add_background("my_timeline", background_metadata)
 ```
+#### Adding events
 
 Events are added using the `add_event` method that takes a `DscaperEvent` instance as a parameter. Again, paramters of type `list[str]` represent distributions (see [Distribution lists](#distribution-lists)). 
 
