@@ -2347,41 +2347,7 @@ class Scaper(object):
                             "source files. In this case the sum of the "
                             "audio of the isolated events will not add up to the "
                             "mixture", ScaperWarning)
-                        
-                # Optionally save isolated eventtypes to disk
-                if save_isolated_eventtypes:
-                    base, ext = os.path.splitext(audio_path)
-                    eventtypes_folder = '{:s}_eventtypes'.format(base)
-                    if not isolated_eventtypes_path is None:
-                        eventtypes_folder = isolated_eventtypes_path
-                    os.makedirs(eventtypes_folder, exist_ok=True)
-
-                    # Create a dict to store the audio for each event type
-                    eventtype_audio = {}
-                    for e in ann.data:
-                        event_type = e.value['event_type']
-                        if event_type is None:
-                            event_type = "no_type"
-                        if event_type not in eventtype_audio:
-                            eventtype_audio[event_type] = []
-                        eventtype_audio[event_type].append(e)
-                    
-                    # Generate audio for each event type and save to disk
-                    for etype, etype_events in eventtype_audio.items():
-                        eventtype_file = os.path.join(eventtypes_folder, etype + ext)
-                        ann.data = etype_events
-                        self._generate_audio(
-                            eventtype_file,
-                            ann,
-                            reverb=reverb,
-                            fix_clipping=fix_clipping,
-                            peak_normalization=peak_normalization,
-                            quick_pitch_time= quick_pitch_time,
-                            save_isolated_events=False,
-                            disable_sox_warnings=disable_sox_warnings,
-                            save_isolated_eventtypes=False)
                
-
         # Document output paths
         # TODO: this is redundant with audio_path and isolated_events_path that
         #  are also stored in ann.sandbox.scaper. For now we're keeping these
@@ -2393,6 +2359,7 @@ class Scaper(object):
         
         # Return audio for in-memory processing
         return soundscape_audio, event_audio_list, scale_factor, ref_db_change
+    
 
     def generate(self,
                  audio_path=None,
@@ -2614,5 +2581,45 @@ class Scaper(object):
                 writer = csv.writer(csv_file, delimiter=txt_sep)
                 writer.writerows(annotation_list)
 
+        
+        # Optionally save isolated eventtypes to disk
+        if save_isolated_eventtypes:
+            base, ext = os.path.splitext(str(audio_path))
+            eventtypes_folder = '{:s}_eventtypes'.format(base)
+            if not isolated_eventtypes_path is None:
+                eventtypes_folder = isolated_eventtypes_path
+            os.makedirs(eventtypes_folder, exist_ok=True)
+
+            # Create a dict to store the audio for each event type
+            eventtype_audio = {}
+            for e in ann.data:
+                event_type = e.value['event_type']
+                if event_type is None:
+                    event_type = "no_type"
+                if event_type not in eventtype_audio:
+                    eventtype_audio[event_type] = []
+                eventtype_audio[event_type].append(e)
+            
+            # Generate audio for each event type and save to disk
+            for etype, etype_events in eventtype_audio.items():
+                eventtype_file = os.path.join(eventtypes_folder, etype + ext)
+                ann.data = etype_events
+                self._generate_audio(
+                    eventtype_file,
+                    ann,
+                    reverb=reverb,
+                    fix_clipping=fix_clipping,
+                    peak_normalization=peak_normalization,
+                    quick_pitch_time= quick_pitch_time,
+                    save_isolated_events=False,
+                    disable_sox_warnings=disable_sox_warnings,
+                    save_isolated_eventtypes=False)
+                
+                # TODO: save the JAMS annotation for this event type
+               
+        
+        
+        
+        
         # Return
         return soundscape_audio, soundscape_jam, annotation_list, event_audio_list
