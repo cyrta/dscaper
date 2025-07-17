@@ -1454,7 +1454,7 @@ class Scaper(object):
 
         # get allowed labels
         if library is None:
-            allowed_labels = self.bg_labels
+            allowed_labels = self.fg_labels
         else:
             # get allowed labels from the library
             _validate_library(library)
