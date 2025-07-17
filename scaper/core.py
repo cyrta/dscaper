@@ -660,7 +660,7 @@ def _validate_label(label, allowed_labels):
             'Label must be specified using a "const" or "choose" tuple.')
 
 
-def _validate_source_file(source_file_tuple, label_tuple):
+def _validate_source_file(source_file_tuple, label_tuple, library=None):
     '''
     Validate that a source_file tuple is in the right format a that it's values
     are valid.
@@ -685,11 +685,16 @@ def _validate_source_file(source_file_tuple, label_tuple):
     # If source file is specified explicitly
     if source_file_tuple[0] == "const":
         # 1. the filepath must point to an existing file
-        if not os.path.isfile(source_file_tuple[1]):
+        # get source file path
+        if library is None:
+            source_file_path = source_file_tuple[1]
+        else:
+            source_file_path = os.path.join(str(library), str(label_tuple[1]), str(source_file_tuple[1]))
+        if not os.path.isfile(source_file_path):
             raise ScaperError(
-                "Source file not found: {:s}".format(source_file_tuple[1]))
+                "Source file not found: {:s}".format(source_file_path))
         # 2. the label must match the file's parent folder name
-        parent_name = os.path.basename(os.path.dirname(source_file_tuple[1]))
+        parent_name = os.path.basename(os.path.dirname(source_file_path))
         if label_tuple[0] != "const" or label_tuple[1] != parent_name:
             raise ScaperError(
                 "Source file's parent folder name does not match label.")
@@ -1041,7 +1046,7 @@ def _validate_event(label, source_file, source_time, event_time,
         raise ScaperError('allowed_labels must be of type list.')
 
     # SOURCE FILE
-    _validate_source_file(source_file, label)
+    _validate_source_file(source_file, label, library)
 
     # LABEL
     _validate_label(label, allowed_labels)
@@ -1307,9 +1312,18 @@ class Scaper(object):
         pitch_shift = None
         time_stretch = None
 
+        # get allowed labels
+        if library is None:
+            allowed_labels = self.bg_labels
+        else:
+            # get allowed labels from the library
+            _validate_library(library)
+            allowed_labels = []
+            _populate_label_list(library, allowed_labels)
+
         # Validate parameter format and values
         _validate_event(label, source_file, source_time, event_time,
-                        event_duration, snr, self.bg_labels, None, None, None, library)
+                        event_duration, snr, allowed_labels, None, None, None, library)
 
         # Create background sound event
         bg_event = EventSpec(label=label,
@@ -1438,9 +1452,19 @@ class Scaper(object):
 
         '''
 
+        # get allowed labels
+        if library is None:
+            allowed_labels = self.bg_labels
+        else:
+            # get allowed labels from the library
+            _validate_library(library)
+            allowed_labels = []
+            _populate_label_list(library, allowed_labels)
+        
+
         # SAFETY CHECKS
         _validate_event(label, source_file, source_time, event_time,
-                        event_duration, snr, self.fg_labels, pitch_shift,
+                        event_duration, snr, allowed_labels, pitch_shift,
                         time_stretch, event_type, library)
 
         # Create event
