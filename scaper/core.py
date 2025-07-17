@@ -2615,11 +2615,10 @@ class Scaper(object):
                     disable_sox_warnings=disable_sox_warnings,
                     save_isolated_eventtypes=False)
                 
-                # TODO: save the JAMS annotation for this event type
-               
-        
-        
-        
-        
+                # Save the JAMS file for this event type
+                if jams_path is not None:
+                    eventtype_jams_file = os.path.join(eventtypes_folder, etype + '.jams')
+                    soundscape_jam.save(eventtype_jams_file)
+      
         # Return
         return soundscape_audio, soundscape_jam, annotation_list, event_audio_list
