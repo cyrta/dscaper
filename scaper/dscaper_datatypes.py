@@ -38,7 +38,7 @@ class DscaperEvent(BaseModel):
     source_file: list[str] = ['choose', '[]']
     source_time: list[str] = ['const', '0']
     event_time: list[str] = ['const', '0']
-    event_duration: list[str] = ['const', '5']
+    event_duration: list[str] | None = None # if not set, will use duration of the audio file or default to 5 seconds
     snr: list[str] = ['const', '0']
     pitch_shift: list[str] | None = None
     time_stretch: list[str] | None = None

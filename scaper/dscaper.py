@@ -342,11 +342,18 @@ class Dscaper:
                 )
         # add events
         for event in os.listdir(os.path.join(timeline_path, "events")):
-            # print(f"*** Processing event: {event}")
             event_file = os.path.join(timeline_path, "events", event)
             if os.path.isfile(event_file):
                 with open(event_file, "r") as f:
                     event_data = DscaperEvent.model_validate_json(f.read())
+                if not event_data.event_duration:
+                    # If event_duration is not set, use duration of the audio file or default to 5 seconds
+                    event_data.event_duration = ['const', '5']
+                    if event_data.source_file and event_data.source_file[0] == 'const':
+                        source_file_path = os.path.join(self.library_basedir, event_data.library, event_data.label[1], event_data.source_file[1])
+                        if os.path.isfile(source_file_path):
+                            duration = soundfile.info(source_file_path).duration
+                            event_data.event_duration = ['const', str(duration)]
                 sc.add_event(
                     label=self._get_distribution_tuple(event_data.label),
                     source_file=self._get_distribution_tuple(event_data.source_file),
