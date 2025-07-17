@@ -238,19 +238,13 @@ class Dscaper:
         os.makedirs(background_path, exist_ok=True)
         # Create the background object
         background_id = str(uuid.uuid4())
-        background = DscaperBackground(
-            library=properties.library,
-            label=properties.label,
-            source_file=properties.source_file,
-            source_time=properties.source_time,
-            id=background_id
-        )
+        properties.id = background_id
         # Save the background to a JSON file
         background_file = os.path.join(background_path, f"{background_id}.json")
         with open(background_file, "w") as f:
-            f.write(background.model_dump_json())
+            f.write(properties.model_dump_json())
         # Return a response indicating success
-        return DscaperJsonResponse(status_code=status.HTTP_201_CREATED, content=background.model_dump_json())
+        return DscaperJsonResponse(status_code=status.HTTP_201_CREATED, content=properties.model_dump_json())
 
 
     def add_event(self, name: str, properties: DscaperEvent) -> DscaperJsonResponse:
@@ -272,25 +266,13 @@ class Dscaper:
         os.makedirs(events_path, exist_ok=True)
         # Create the event object
         event_id = str(uuid.uuid4())
-        event = DscaperEvent(
-            library=properties.library,
-            label=properties.label,
-            source_file=properties.source_file,
-            source_time=properties.source_time,
-            event_time=properties.event_time,
-            event_duration=properties.event_duration,
-            snr=properties.snr,
-            pitch_shift=properties.pitch_shift,
-            time_stretch=properties.time_stretch,
-            event_type=properties.event_type,
-            id=event_id
-        )
+        properties.id = event_id
         # Save the event to a JSON file
         event_file = os.path.join(events_path, f"{event_id}.json")
         with open(event_file, "w") as f:
-            f.write(event.model_dump_json())
+            f.write(properties.model_dump_json())
         # Return a response indicating success
-        return DscaperJsonResponse(status_code=status.HTTP_201_CREATED, content=event.model_dump_json())
+        return DscaperJsonResponse(status_code=status.HTTP_201_CREATED, content=properties.model_dump_json())
 
 
     def generate_timeline(self, name: str, properties: DscaperGenerate) -> DscaperJsonResponse:
@@ -364,13 +346,15 @@ class Dscaper:
                     pitch_shift=self._get_distribution_tuple(event_data.pitch_shift) if event_data.pitch_shift else None,
                     time_stretch=self._get_distribution_tuple(event_data.time_stretch) if event_data.time_stretch else None,
                     event_type=event_data.event_type,
-                    library=os.path.join(self.library_basedir, event_data.library) if event_data.library else None
+                    library=os.path.join(self.library_basedir, event_data.library) if event_data.library else None,
+                    speaker=event_data.speaker,
+                    text=event_data.text
                 )
         # Generate the timeline
         audiofile = os.path.join(generate_dir, "soundscape.wav")
         jamsfile = os.path.join(generate_dir, "soundscape.jams")
         txtfile = os.path.join(generate_dir, "soundscape.txt")
-        sc.generate(
+        soundscape_audio, soundscape_jam, annotation_list, event_audio_list = sc.generate(
             audio_path=audiofile,
             jams_path=jamsfile,
             allow_repeated_label=True,
@@ -382,11 +366,15 @@ class Dscaper:
             save_isolated_events=properties.save_isolated_events,
             save_isolated_eventtypes=properties.save_isolated_eventtypes
         )
-        # add the generated files in the properties
+        # add the generated files in the properties (including subdirectories)
         properties.generated_files = []
-        for file in os.listdir(generate_dir):
-            if file.endswith(('.wav', '.jams', '.txt')):
-                properties.generated_files.append(file)
+        for root, dirs, files in os.walk(generate_dir):
+            for file in files:
+                if file.endswith(('.wav', '.jams', '.txt')):
+                    # remove the generate_dir from the file path
+                    # to make the path relative to the generate_dir
+                    file = os.path.relpath(os.path.join(root, file), generate_dir)
+                    properties.generated_files.append(file)
         # Save the properties to a JSON file
         properties_file = os.path.join(generate_dir, "generate.json")
         with open(properties_file, "w") as f:

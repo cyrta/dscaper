@@ -219,7 +219,9 @@ def test_max_polyphony():
                                            pitch_shift=None,
                                            time_stretch=None,
                                            event_type=None,
-                                           library=None)
+                                           library=None,
+                                           speaker=None,
+                                           text=None)
 
             ann.append(time=ind / 2.,
                        duration=10,
@@ -244,7 +246,9 @@ def test_max_polyphony():
                                            pitch_shift=None,
                                            time_stretch=None,
                                            event_type=None,
-                                           library=None)
+                                           library=None,
+                                           speaker=None,
+                                           text=None)
 
             ann.append(time=ind * 10,
                        duration=5,

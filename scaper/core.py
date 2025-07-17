@@ -63,7 +63,7 @@ SUPPORTED_DIST = {"const": _sample_const,
 EventSpec = namedtuple(
     'EventSpec',
     ['label', 'source_file', 'source_time', 'event_time', 'event_duration',
-     'snr', 'role', 'pitch_shift', 'time_stretch','event_type', 'library'])
+     'snr', 'role', 'pitch_shift', 'time_stretch','event_type', 'library', 'speaker', 'text'])
 '''
 Container for storing event specifications, either probabilistic (i.e. using
 distribution tuples to specify possible values) or instantiated (i.e. storing
@@ -1336,14 +1336,16 @@ class Scaper(object):
                              pitch_shift=pitch_shift,
                              time_stretch=time_stretch,
                              event_type=None,
-                             library=library)
+                             library=library,
+                             speaker=None,
+                             text=None)
 
         # Add event to background spec
         self.bg_spec.append(bg_event)
 
 
     def add_event(self, label, source_file, source_time, event_time,
-                  event_duration, snr, pitch_shift, time_stretch, event_type=None, library=None):
+                  event_duration, snr, pitch_shift, time_stretch, event_type=None, library=None, speaker=None, text=None):
         '''
         Add a foreground sound event to the foreground specification.
 
@@ -1478,7 +1480,9 @@ class Scaper(object):
                           pitch_shift=pitch_shift,
                           time_stretch=time_stretch,
                           event_type=event_type,
-                          library=library)
+                          library=library,
+                          speaker=speaker,
+                          text=text)
 
         # Add event to foreground specification
         self.fg_spec.append(event)
@@ -1797,7 +1801,9 @@ class Scaper(object):
                                        pitch_shift=pitch_shift,
                                        time_stretch=time_stretch,
                                        event_type=event.event_type,
-                                       library=event.library)
+                                       library=event.library,
+                                       speaker=event.speaker,
+                                       text=event.text)
         # Return
         return instantiated_event
 

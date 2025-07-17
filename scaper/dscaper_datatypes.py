@@ -43,6 +43,8 @@ class DscaperEvent(BaseModel):
     pitch_shift: list[str] | None = None
     time_stretch: list[str] | None = None
     event_type: str | None = None
+    speaker: str | None = None
+    text: str | None = None
     id: str | None = None # set by the server
 
 class DscaperEvents(BaseModel):

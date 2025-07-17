@@ -1333,7 +1333,9 @@ def test_scaper_add_background():
                                   pitch_shift=None,
                                   time_stretch=None,
                                   event_type=None,
-                                  library=None)
+                                  library=None,
+                                  speaker=None,
+                                  text=None)
     assert sc.bg_spec == [bg_event_expected]
 
 
@@ -1365,7 +1367,9 @@ def test_scaper_add_event():
                                   pitch_shift=('normal', 0, 1),
                                   time_stretch=('uniform', 0.8, 1.2),
                                   event_type=None,
-                                  library=None)
+                                  library=None,
+                                  speaker=None,
+                                  text=None)
     assert sc.fg_spec[0] == fg_event_expected
 
 
@@ -1382,7 +1386,9 @@ def test_scaper_instantiate_event():
                          pitch_shift=('normal', 0, 1),
                          time_stretch=('uniform', 0.8, 1.2),
                          event_type=None,
-                         library=None)
+                         library=None,
+                         speaker=None,
+                         text=None)
 
     # test valid case
     sc = scaper.Scaper(10.0, fg_path=FG_PATH, bg_path=BG_PATH)
