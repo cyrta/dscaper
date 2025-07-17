@@ -326,8 +326,7 @@ class Dscaper:
             bg_path=None,  # bg_path is not used in this context
             random_state=properties.seed
         )
-        # TODO: add to the properties
-        sc.ref_db = -20  # Set the reference dB level
+        sc.ref_db = properties.ref_db  # Set the reference dB level
         # add backgrounds
         for bg in os.listdir(os.path.join(timeline_path, "background")):
             # print(f"*** Processing background: {bg}")
