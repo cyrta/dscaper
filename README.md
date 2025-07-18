@@ -482,3 +482,20 @@ jams_path = "/path/to/input.jams"
 rttm_path = "/path/to/output.rttm"
 jams2rttm.jams_to_rttm(jams_path, rttm_path)
 ```
+
+### Jams to TextGrid
+The file `misc/jams_to_textgrid` contains a script that converts JAMS files to TextGrid format. This is useful for working with audio annotations in tools like Praat. Example usage:
+
+```python
+import misc.jams_to_textgrid as jams2textgrid
+
+jams_path = "/path/to/input.jams"
+textgrid_path = "/path/to/output.textgrid"
+jams2textgrid.jams_to_textgrid(jams_path, textgrid_path)
+```
+
+You need to install mytextgrid package to use this script. You can install it using pip:
+
+```bash
+pip install mytextgrid
+```
