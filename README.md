@@ -72,9 +72,9 @@ On windows you can use the provided installation binaries:
 - SoX: https://sourceforge.net/projects/sox/files/sox/
 - FFmpeg: https://ffmpeg.org/download.html#build-windows
 
-### Installing Scaper
+### Installing dScaper
 
-To install the latest version of scaper from source, clone or pull the lastest version:
+To install the latest version of dScaper from source, clone or pull the lastest version:
 
 ```
 git clone https://github.com/cyrta/dscaper
@@ -83,11 +83,12 @@ git clone https://github.com/cyrta/dscaper
 Then create an environment and install the package from requirements.txt:
 
 ```
-cd scaper
+cd dscaper
 python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 pip install -r requirements.txt
 ```
+
 ## Python API
 You can use dScaper as a Python module. The main class is `Dscaper`, which provides methods for creating timelines, adding audio files, and generating audio. dScaper needs a folder to store audio files, metadata and timelines. You can specify this folder using the `dscaper_base_path` parameter when creating an instance of `Dscaper`. If you do not specify it, dScaper will use the default path `./data`.
 
