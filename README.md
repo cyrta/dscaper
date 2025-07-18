@@ -24,6 +24,7 @@ alternative API for accessing Scaper that is optimized for the usage in pipeline
   - [Timeline API](#timeline-api)
 - [Distribution lists](#distribution-lists)
 - [Folder structure](#folder-structure)
+- [Misc](#misc)
 
 
 ## Architecture and key features
@@ -468,3 +469,16 @@ When generating with `save_isolated_positions` set to `True`, an additional subf
        └── [...]
 ```
 You can also generate with `save_isolated_events` set to `True`. In this case, a separate audio file is created for each event in the soundscape. The audio files are stored in a subfolder `soundscape_events` within the `[generation_id]` folder. 
+
+## Misc
+
+### Jams to RTTM
+The file `misc/jams_to_rttm` contains a script that converts JAMS files to RTTM format. This is a format that can be used for evaluation or further processing. Example usage:
+
+```python
+import misc.jams_to_rttm as jams2rttm
+
+jams_path = "/path/to/input.jams"
+rttm_path = "/path/to/output.rttm"
+jams2rttm.jams_to_rttm(jams_path, rttm_path)
+```
