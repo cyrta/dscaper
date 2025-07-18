@@ -165,6 +165,8 @@ Attributes of `DscaperEvent`:
   - `pitch_shift (list[str] | None)`: Optional pitch shift parameters for the event. Defaults to `None`.
   - `time_stretch (list[str] | None)`: Optional time stretch parameters for the event. Defaults to `None`.
   - `position (str | None)`: Optional position of the event (e.g., seat_1, seat_2, door, window). Defaults to `None`. This allows you to categorize events in the timeline and write them to separate audio files when generating the timeline. This is useful for applying different post-processings, e.g. applying different room acoustics to different speakers and sound sources.
+  - `speaker (str | None)`: Optional speaker of the event. Defaults to `None`. This allows you to categorize events by speaker.
+  - `text (str | None)`: Used for audio with speech content. This is a string that can be used to save the content. 
 
 ```python
 from scaper.dscaper_datatypes import DscaperEvent

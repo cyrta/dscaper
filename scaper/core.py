@@ -1407,6 +1407,12 @@ class Scaper(object):
             audio is sampled from the library folder instead of the
             foreground folder. This is useful for sharing samples between
             different projects.
+        speaker : str or None
+            Specifies the speaker of the event. This is a string that can be used
+            to identify the speaker.
+        text : str or None
+            Used for audio with speech content. This is a string that can be used
+            to save the content.
 
         Notes
         -----
