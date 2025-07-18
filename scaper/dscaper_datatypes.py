@@ -42,7 +42,7 @@ class DscaperEvent(BaseModel):
     snr: list[str] = ['const', '0']
     pitch_shift: list[str] | None = None
     time_stretch: list[str] | None = None
-    event_type: str | None = None
+    position: str | None = None
     speaker: str | None = None
     text: str | None = None
     id: str | None = None # set by the server
@@ -55,7 +55,7 @@ class DscaperGenerate(BaseModel):
     ref_db: int = -20
     reverb: float = 0.0
     save_isolated_events: bool = False
-    save_isolated_eventtypes: bool = False
+    save_isolated_positions: bool = False
     id: str | None = None # set by the server
     timestamp: int = 0 # set by the server
     generated_files: list[str] = []  # List of generated audio files, set by the server

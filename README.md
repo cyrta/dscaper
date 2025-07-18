@@ -36,9 +36,9 @@ The main features of dScaper are:
 - **Audio library management**: dScaper allows you to store and manage audio files in a structured way. Audio files are organized into libraries and labels, making it easy to retrieve and use them in multiple timelines.
 - **Timeline management**: dScaper allows you to create and edit timelines, which define the structure of the generated audio including background sounds and events. dScaper supports the same distributions for sampling as the original Scaper library.
 - **Audio generation**: dScaper can generate multiple version of a timeline. It stores the generated audio files along with their metadata making it easy to retrieve and compare them later.
+- **Event positions**: dScaper supports event positions, allowing you to categorize events in the timeline. This is useful for generating multiple audio files for different event positions, e.g. to apply different room acoustics to different speakers and sound sources.
+- **Speaker and text metadata**: dScaper allows you to add speaker and text metadata to events. This is useful for generating audio files with speaker and text annotations.
 - **Web API and Python API**: dScaper provides a RESTful Web API and a Python API. The web API allows to use dScaper as a standalone server simplifying integration and scaling of pipelines.
-- **Event types**: dScaper supports event types, allowing you to categorize events in the timeline. This is useful for generating audio for multiple speakers or sound sources in a single timeline. It allows to apply different post-processings, e.g. applying different room accoustics to different speakers and sound sources.
-
 
 ## Installation
 
@@ -163,7 +163,7 @@ Attributes of `DscaperEvent`:
   - `snr (list[str])`: The signal-to-noise ratio for the event, typically in the form `['const', '0']`.
   - `pitch_shift (list[str] | None)`: Optional pitch shift parameters for the event. Defaults to `None`.
   - `time_stretch (list[str] | None)`: Optional time stretch parameters for the event. Defaults to `None`.
-  - `event_type (str | None)`: Optional type of the event (e.g., speakerA, speakerB, soundSource1). Defaults to `None`. This allows you to categorize events in the timeline and write them to separate audio files when generating the timeline. This is useful for applying different post-processings, e.g. applying different room acoustics to different speakers and sound sources.
+  - `position (str | None)`: Optional position of the event (e.g., seat_1, seat_2, door, window). Defaults to `None`. This allows you to categorize events in the timeline and write them to separate audio files when generating the timeline. This is useful for applying different post-processings, e.g. applying different room acoustics to different speakers and sound sources.
 
 ```python
 from scaper.dscaper_datatypes import DscaperEvent
@@ -180,7 +180,7 @@ Attributes of `DscaperGenerate`:
   - `ref_db (int)`: Reference decibel level for the generated audio. Default is -20.
   - `reverb (float)`: Amount of reverb to apply to the generated audio. Default is 0.0.
   - `save_isolated_events (bool)`: Whether to save isolated audio files for each event. Default is False.
-  - `save_isolated_eventtypes (bool)`: Whether to save isolated audio files for each event type. Default is False.
+  - `save_isolated_positions (bool)`: Whether to save isolated audio files for each event position. Default is False.
 
 ```python
 from scaper.dscaper_datatypes import DscaperGenerate
@@ -449,7 +449,7 @@ Timelines define the structure of the generated audio. They are organized as fol
     └── [timeline_2_name]
         └── [...]
 ```
-When generating with `save_isolated_eventtypes` set to `True`, an additional subfolder `soundscape_eventtypes` is created in the `[generation_id]` folder. The structure is as follows:
+When generating with `save_isolated_positions` set to `True`, an additional subfolder `soundscape_positions` is created in the `[generation_id]` folder. The structure is as follows:
 
 
 ```
@@ -458,13 +458,13 @@ When generating with `save_isolated_eventtypes` set to `True`, an additional sub
        │    ├── generate.json 
        │    ├── soundscape.wav - complete soundscape with all events
        │    ├── ..
-       │    └── soundscape_eventtypes
-       │         ├── [event_type_1].wav - soundscape with only events of type 1
-       │         ├── [event_type_1].jams - JAMS file for event type 1    
-       │         ├── [event_type_2].wav - soundscape with only events of type 2
-       │         ├── [event_type_2].jams - JAMS file for event type 2
+       │    └── soundscape_positions
+       │         ├── [position_1].wav - soundscape with only events of position 1
+       │         ├── [position_1].jams - JAMS file for event position 1
+       │         ├── [position_2].wav - soundscape with only events of position 2
+       │         ├── [position_2].jams - JAMS file for event position 2
        │         ├── [...]
-       │         └── no_type.wav - soundscape with all events that do not have an event type assigned
+       │         └── no_position.wav - soundscape with all events that do not have an event position assigned
        └── [...]
 ```
 You can also generate with `save_isolated_events` set to `True`. In this case, a separate audio file is created for each event in the soundscape. The audio files are stored in a subfolder `soundscape_events` within the `[generation_id]` folder. 

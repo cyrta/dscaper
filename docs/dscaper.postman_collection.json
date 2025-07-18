@@ -997,7 +997,7 @@
 						}
 					],
 					"cookie": [],
-					"body": "{\n    \"library\": \"demolib\",\n    \"label\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_file\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_duration\": [\n        \"const\",\n        \"5\"\n    ],\n    \"snr\": [\n        \"const\",\n        \"0\"\n    ],\n    \"pitch_shift\": null,\n    \"time_stretch\": null,\n    \"event_type\": null,\n    \"id\": \"beca8184-f1e6-4e45-af31-3583d65d7dc0\"\n}"
+					"body": "{\n    \"library\": \"demolib\",\n    \"label\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_file\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_duration\": [\n        \"const\",\n        \"5\"\n    ],\n    \"snr\": [\n        \"const\",\n        \"0\"\n    ],\n    \"pitch_shift\": null,\n    \"time_stretch\": null,\n    \"position\": null,\n    \"id\": \"beca8184-f1e6-4e45-af31-3583d65d7dc0\"\n}"
 				}
 			]
 		},
@@ -1008,7 +1008,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"seed\": 0,\r\n    \"ref_db\": -20,\r\n    \"reverb: float\": 0.0,\r\n    \"save_isolated_events\": false,\r\n    \"save_isolated_eventtypes\": false\r\n}",
+					"raw": "{\r\n    \"seed\": 0,\r\n    \"ref_db\": -20,\r\n    \"reverb: float\": 0.0,\r\n    \"save_isolated_events\": false,\r\n    \"save_isolated_positions\": false\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -1129,7 +1129,7 @@
 						}
 					],
 					"cookie": [],
-					"body": "{\n    \"library\": \"demolib\",\n    \"label\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_file\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_duration\": [\n        \"const\",\n        \"5\"\n    ],\n    \"snr\": [\n        \"const\",\n        \"0\"\n    ],\n    \"pitch_shift\": null,\n    \"time_stretch\": null,\n    \"event_type\": null,\n    \"id\": \"beca8184-f1e6-4e45-af31-3583d65d7dc0\"\n}"
+					"body": "{\n    \"library\": \"demolib\",\n    \"label\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_file\": [\n        \"choose\",\n        \"[]\"\n    ],\n    \"source_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_time\": [\n        \"const\",\n        \"0\"\n    ],\n    \"event_duration\": [\n        \"const\",\n        \"5\"\n    ],\n    \"snr\": [\n        \"const\",\n        \"0\"\n    ],\n    \"pitch_shift\": null,\n    \"time_stretch\": null,\n    \"position\": null,\n    \"id\": \"beca8184-f1e6-4e45-af31-3583d65d7dc0\"\n}"
 				}
 			]
 		},

@@ -253,8 +253,8 @@
           "ref_db_change": 0,
           "ref_db_generated": -50,
           "quick_pitch_time": false,
-          "save_isolated_eventtypes": false,
-          "isolated_eventtypes_path": null
+          "save_isolated_positions": false,
+          "isolated_positions_path": null
         }
       },
       "time": 0,

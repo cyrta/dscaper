@@ -345,7 +345,7 @@ class Dscaper:
                     snr=self._get_distribution_tuple(event_data.snr),
                     pitch_shift=self._get_distribution_tuple(event_data.pitch_shift) if event_data.pitch_shift else None,
                     time_stretch=self._get_distribution_tuple(event_data.time_stretch) if event_data.time_stretch else None,
-                    event_type=event_data.event_type,
+                    position=event_data.position,
                     library=os.path.join(self.library_basedir, event_data.library) if event_data.library else None,
                     speaker=event_data.speaker,
                     text=event_data.text
@@ -364,7 +364,7 @@ class Dscaper:
             no_audio=False,
             txt_path=txtfile,
             save_isolated_events=properties.save_isolated_events,
-            save_isolated_eventtypes=properties.save_isolated_eventtypes
+            save_isolated_positions=properties.save_isolated_positions
         )
         # add the generated files in the properties (including subdirectories)
         properties.generated_files = []

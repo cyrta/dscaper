@@ -260,7 +260,7 @@ def test_add_event_and_list_events(temp_lib_base):
     assert isinstance(event, DscaperEvent)
     assert event.library == "my_lib"
     assert "id" in event.model_dump()  # Check if ID is present
-    assert "event_type" in event.model_dump()  # Check if event_type is present
+    assert "position" in event.model_dump()  # Check if position is present
     # add event to a non-existing timeline
     resp2 = d.add_event("non-existing-timeline", ev)
     assert resp2.status == "error"
@@ -297,10 +297,10 @@ def test_generate_timeline(temp_lib_base):
     resp = d.add_background("timeline3", bg)
     assert resp.status == "success"
     # add events
-    ev = DscaperEvent(library="my_lib",event_type="speakerA")
+    ev = DscaperEvent(library="my_lib",position="speakerA")
     resp = d.add_event("timeline3", ev)
     assert resp.status == "success"
-    ev = DscaperEvent(library="my_lib",event_type="speakerB")
+    ev = DscaperEvent(library="my_lib",position="speakerB")
     resp = d.add_event("timeline3", ev)
     assert resp.status == "success"
     # add event with const label and source file
@@ -308,7 +308,7 @@ def test_generate_timeline(temp_lib_base):
         library="my_lib",
         label=["const", "my_label2"],
         source_file=["const", "audio2.wav"],
-        event_type="speakerA"
+        position="speakerA"
     )
     resp = d.add_event("timeline3", ev)
     assert resp.status == "success"
@@ -327,7 +327,7 @@ def test_generate_timeline(temp_lib_base):
     assert "soundscape.txt" in generated_data.generated_files
     assert "soundscape.jams" in generated_data.generated_files
     # generate timeline with other settings
-    gen_props2 = DscaperGenerate(seed=123, ref_db=-30, reverb=0.2, save_isolated_eventtypes=True)
+    gen_props2 = DscaperGenerate(seed=123, ref_db=-30, reverb=0.2, save_isolated_positions=True)
     gen_resp2 = d.generate_timeline("timeline3", gen_props2)
     assert gen_resp2.status == "success"
     assert gen_resp2.content is not None

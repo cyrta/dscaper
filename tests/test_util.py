@@ -218,7 +218,7 @@ def test_max_polyphony():
                                            role='foreground',
                                            pitch_shift=None,
                                            time_stretch=None,
-                                           event_type=None,
+                                           position=None,
                                            library=None,
                                            speaker=None,
                                            text=None)
@@ -245,7 +245,7 @@ def test_max_polyphony():
                                            role='foreground',
                                            pitch_shift=None,
                                            time_stretch=None,
-                                           event_type=None,
+                                           position=None,
                                            library=None,
                                            speaker=None,
                                            text=None)

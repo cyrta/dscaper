@@ -1161,18 +1161,18 @@ def test_validate_time_stretch():
         ScaperWarning, scaper.core._validate_time_stretch, ('normal', 5, 1))
 
 
-def test_validate_event_type():
-    # event_type must not contain spaces
-    pytest.raises(ScaperError, scaper.core._validate_event_type,"with space")
-    # event_type must be a string or None
-    pytest.raises(ScaperError, scaper.core._validate_event_type, 5)
-    pytest.raises(ScaperError, scaper.core._validate_event_type, ['list'])
-    # event_type must not be an empty string
-    pytest.raises(ScaperError, scaper.core._validate_event_type, "")
+def test_validate_position():
+    # position must not contain spaces
+    pytest.raises(ScaperError, scaper.core._validate_position,"with space")
+    # position must be a string or None
+    pytest.raises(ScaperError, scaper.core._validate_position, 5)
+    pytest.raises(ScaperError, scaper.core._validate_position, ['list'])
+    # position must not be an empty string
+    pytest.raises(ScaperError, scaper.core._validate_position, "")
     # even_type can be None
-    scaper.core._validate_event_type(None)
-    # event_type can be a string
-    scaper.core._validate_event_type("valid_event-type")
+    scaper.core._validate_position(None)
+    # position can be a string
+    scaper.core._validate_position("valid_event-type")
 
 
 def test_validate_library():
@@ -1210,7 +1210,7 @@ def test_validate_event():
                       allowed_labels=bal,
                       pitch_shift=None,
                       time_stretch=None,
-                      event_type=None,
+                      position=None,
                       library=None)
 
 
@@ -1332,7 +1332,7 @@ def test_scaper_add_background():
                                   role='background',
                                   pitch_shift=None,
                                   time_stretch=None,
-                                  event_type=None,
+                                  position=None,
                                   library=None,
                                   speaker=None,
                                   text=None)
@@ -1366,7 +1366,7 @@ def test_scaper_add_event():
                                   role='foreground',
                                   pitch_shift=('normal', 0, 1),
                                   time_stretch=('uniform', 0.8, 1.2),
-                                  event_type=None,
+                                  position=None,
                                   library=None,
                                   speaker=None,
                                   text=None)
@@ -1385,7 +1385,7 @@ def test_scaper_instantiate_event():
                          role='foreground',
                          pitch_shift=('normal', 0, 1),
                          time_stretch=('uniform', 0.8, 1.2),
-                         event_type=None,
+                         position=None,
                          library=None,
                          speaker=None,
                          text=None)
@@ -2072,7 +2072,7 @@ def test_generate_isolated_events():
             _test_generate_isolated_events(sr, isolated_events_path)
 
 
-def test_generate_isolated_eventtypes():
+def test_generate_isolated_positions():
     # test generating isolated events with different event types
     path_to_audio = os.path.join('tests','data','audio')
 
@@ -2105,7 +2105,7 @@ def test_generate_isolated_eventtypes():
                     snr=('normal', 10, 3),
                     pitch_shift=None,
                     time_stretch=None,
-                    event_type="type_a")
+                    position="type_a")
     for _ in range(2):
         sc.add_event(label=('const', 'human_voice'),
                     source_file=('choose', []),
@@ -2115,7 +2115,7 @@ def test_generate_isolated_eventtypes():
                     snr=('normal', 10, 3),
                     pitch_shift=None,
                     time_stretch=None,
-                    event_type='type_b')
+                    position='type_b')
     
     tmpfiles = []
     with _close_temp_files(tmpfiles):
@@ -2126,7 +2126,7 @@ def test_generate_isolated_eventtypes():
         tmpfiles.append(temp_jam_file)
         tmpfiles.append(temp_txt_file)
         
-        isolated_events_path = 'tests/mix_eventtypes'
+        isolated_events_path = 'tests/mix_positions'
         sc.generate(temp_wav_file.name, temp_jam_file.name,
                 allow_repeated_label=True,
                 allow_repeated_source=True,
@@ -2134,8 +2134,8 @@ def test_generate_isolated_eventtypes():
                 disable_sox_warnings=True,
                 no_audio=False,
                 txt_path=temp_txt_file.name,
-                save_isolated_eventtypes=True,
-                isolated_eventtypes_path=isolated_events_path)
+                save_isolated_positions=True,
+                isolated_positions_path=isolated_events_path)
         # make sure the isolated events are saved
         assert os.path.exists(isolated_events_path)
         assert os.path.exists(os.path.join(isolated_events_path, 'type_a.wav'))
