@@ -309,47 +309,51 @@ class Dscaper:
             random_state=properties.seed
         )
         sc.ref_db = properties.ref_db  # Set the reference dB level
-        # add backgrounds
-        for bg in os.listdir(os.path.join(timeline_path, "background")):
-            # print(f"*** Processing background: {bg}")
-            bg_file = os.path.join(timeline_path, "background", bg)
-            if os.path.isfile(bg_file):
-                with open(bg_file, "r") as f:
-                    background = DscaperBackground.model_validate_json(f.read())
-                sc.add_background(
-                    label=self._get_distribution_tuple(background.label),
-                    source_file=self._get_distribution_tuple(background.source_file),
-                    source_time=self._get_distribution_tuple(background.source_time),
-                    library=os.path.join(self.library_basedir, background.library) if background.library else None
-                )
-        # add events
-        for event in os.listdir(os.path.join(timeline_path, "events")):
-            event_file = os.path.join(timeline_path, "events", event)
-            if os.path.isfile(event_file):
-                with open(event_file, "r") as f:
-                    event_data = DscaperEvent.model_validate_json(f.read())
-                if not event_data.event_duration:
-                    # If event_duration is not set, use duration of the audio file or default to 5 seconds
-                    event_data.event_duration = ['const', '5']
-                    if event_data.source_file and event_data.source_file[0] == 'const':
-                        source_file_path = os.path.join(self.library_basedir, event_data.library, event_data.label[1], event_data.source_file[1])
-                        if os.path.isfile(source_file_path):
-                            duration = soundfile.info(source_file_path).duration
-                            event_data.event_duration = ['const', str(duration)]
-                sc.add_event(
-                    label=self._get_distribution_tuple(event_data.label),
-                    source_file=self._get_distribution_tuple(event_data.source_file),
-                    source_time=self._get_distribution_tuple(event_data.source_time),
-                    event_time=self._get_distribution_tuple(event_data.event_time),
-                    event_duration=self._get_distribution_tuple(event_data.event_duration),
-                    snr=self._get_distribution_tuple(event_data.snr),
-                    pitch_shift=self._get_distribution_tuple(event_data.pitch_shift) if event_data.pitch_shift else None,
-                    time_stretch=self._get_distribution_tuple(event_data.time_stretch) if event_data.time_stretch else None,
-                    position=event_data.position,
-                    library=os.path.join(self.library_basedir, event_data.library) if event_data.library else None,
-                    speaker=event_data.speaker,
-                    text=event_data.text
-                )
+        # check if background folder exists
+        if os.path.exists(os.path.join(timeline_path, "background")):
+            # add backgrounds
+            for bg in os.listdir(os.path.join(timeline_path, "background")):
+                # print(f"*** Processing background: {bg}")
+                bg_file = os.path.join(timeline_path, "background", bg)
+                if os.path.isfile(bg_file):
+                    with open(bg_file, "r") as f:
+                        background = DscaperBackground.model_validate_json(f.read())
+                    sc.add_background(
+                        label=self._get_distribution_tuple(background.label),
+                        source_file=self._get_distribution_tuple(background.source_file),
+                        source_time=self._get_distribution_tuple(background.source_time),
+                        library=os.path.join(self.library_basedir, background.library) if background.library else None
+                    )
+        # check if events folder exists
+        if os.path.exists(os.path.join(timeline_path, "events")):
+            # add events
+            for event in os.listdir(os.path.join(timeline_path, "events")):
+                event_file = os.path.join(timeline_path, "events", event)
+                if os.path.isfile(event_file):
+                    with open(event_file, "r") as f:
+                        event_data = DscaperEvent.model_validate_json(f.read())
+                    if not event_data.event_duration:
+                        # If event_duration is not set, use duration of the audio file or default to 5 seconds
+                        event_data.event_duration = ['const', '5']
+                        if event_data.source_file and event_data.source_file[0] == 'const':
+                            source_file_path = os.path.join(self.library_basedir, event_data.library, event_data.label[1], event_data.source_file[1])
+                            if os.path.isfile(source_file_path):
+                                duration = soundfile.info(source_file_path).duration
+                                event_data.event_duration = ['const', str(duration)]
+                    sc.add_event(
+                        label=self._get_distribution_tuple(event_data.label),
+                        source_file=self._get_distribution_tuple(event_data.source_file),
+                        source_time=self._get_distribution_tuple(event_data.source_time),
+                        event_time=self._get_distribution_tuple(event_data.event_time),
+                        event_duration=self._get_distribution_tuple(event_data.event_duration),
+                        snr=self._get_distribution_tuple(event_data.snr),
+                        pitch_shift=self._get_distribution_tuple(event_data.pitch_shift) if event_data.pitch_shift else None,
+                        time_stretch=self._get_distribution_tuple(event_data.time_stretch) if event_data.time_stretch else None,
+                        position=event_data.position,
+                        library=os.path.join(self.library_basedir, event_data.library) if event_data.library else None,
+                        speaker=event_data.speaker,
+                        text=event_data.text
+                    )
         # Generate the timeline
         audiofile = os.path.join(generate_dir, "soundscape.wav")
         jamsfile = os.path.join(generate_dir, "soundscape.jams")
