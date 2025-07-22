@@ -301,14 +301,11 @@ class Dscaper:
         os.makedirs(generate_dir, exist_ok=True)
         properties.id = generate_id
         properties.timestamp = int(time.time())
-        fg_path = os.path.join(timeline_path, "foreground")
-        bg_path = os.path.join(timeline_path, "background")
         # Use scaper to generate the timeline
-        print("Modified code! "*50)
         sc = scaper.Scaper(
             duration=timeline.duration,
-            fg_path=fg_path,  # fg_path is not used in this context
-            bg_path=bg_path,  # bg_path is not used in this context
+            fg_path=None,  # fg_path is not used in this context
+            bg_path=None,  # bg_path is not used in this context
             random_state=properties.seed
         )
         sc.ref_db = properties.ref_db  # Set the reference dB level
@@ -343,15 +340,6 @@ class Dscaper:
                             if os.path.isfile(source_file_path):
                                 duration = soundfile.info(source_file_path).duration
                                 event_data.event_duration = ['const', str(duration)]
-                    
-                    print("Debug dscaper.py:")
-                    print(event_data.event_time)
-                    print(type(event_data.event_time))
-                    
-                    print(event_data.event_duration)
-                    print(type(event_data.event_duration))
-                    print("/"*50)
-
                     sc.add_event(
                         label=self._get_distribution_tuple(event_data.label),
                         source_file=self._get_distribution_tuple(event_data.source_file),

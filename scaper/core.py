@@ -737,9 +737,6 @@ def _validate_time(time_tuple):
         if (time_tuple[1] is None or
                 not is_real_number(time_tuple[1]) or
                 time_tuple[1] < 0):
-            print("Debug:")
-            print(time_tuple[0])
-            print(time_tuple[1])
             raise ScaperError(
                 'Time must be a real non-negative number.')
     elif time_tuple[0] == "choose" or time_tuple[0] == "choose_weighted":
@@ -1061,9 +1058,6 @@ def _validate_event(label, source_file, source_time, event_time,
     _validate_time(source_time)
 
     # EVENT TIME
-    print("Debug before event time:")
-    print(event_time)
-    print(type(event_time))
     _validate_time(event_time)
 
     # EVENT DURATION
