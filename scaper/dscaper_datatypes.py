@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Json
 from typing import Any
+from pydantic import BaseModel, Json
 
 
 class DscaperAudio(BaseModel):
@@ -27,7 +27,7 @@ class DscaperBackground(BaseModel):
     label: list[str] = ['choose', '[]']
     source_file: list[str] = ['choose', '[]']
     source_time: list[str] = ['const', '0']
-    id: str | None = None # set by the server
+    id: str = None # set by the server
 
 class DscaperBackgrounds(BaseModel):
     backgrounds: list[DscaperBackground] = []
@@ -38,14 +38,14 @@ class DscaperEvent(BaseModel):
     source_file: list[str] = ['choose', '[]']
     source_time: list[str] = ['const', '0']
     event_time: list[str] = ['const', '0']
-    event_duration: list[str] | None = None # if not set, will use duration of the audio file or default to 5 seconds
+    event_duration: list[str] = None # if not set, will use duration of the audio file or default to 5 seconds
     snr: list[str] = ['const', '0']
-    pitch_shift: list[str] | None = None
-    time_stretch: list[str] | None = None
-    position: str | None = None
-    speaker: str | None = None
-    text: str | None = None
-    id: str | None = None # set by the server
+    pitch_shift: list[str] = None
+    time_stretch: list[str] = None
+    position: str = None
+    speaker: str = None
+    text: str = None
+    id: str = None # set by the server
 
 class DscaperEvents(BaseModel):
     events: list[DscaperEvent] = []
@@ -56,7 +56,7 @@ class DscaperGenerate(BaseModel):
     reverb: float = 0.0
     save_isolated_events: bool = False
     save_isolated_positions: bool = False
-    id: str | None = None # set by the server
+    id: str = None # set by the server
     timestamp: int = 0 # set by the server
     generated_files: list[str] = []  # List of generated audio files, set by the server
 
@@ -66,8 +66,8 @@ class DscaperGenerations(BaseModel):
 class DscaperApiResponse(BaseModel):
     status: str
     status_code: int
-    content: Any | None = None  # Optional response message
-    media_type: str | None = "text/plain"  # Optional type field for response categorization
+    content: Any = None  # Optional response message
+    media_type: str = "text/plain"  # Optional type field for response categorization
 
 class DscaperJsonResponse(BaseModel):
     status: str = "success"

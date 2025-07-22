@@ -38,12 +38,12 @@ setup(
             "Programming Language :: Python :: 3.12",
         ],
     install_requires=[
-        'sox',
-        'jams',
-        'numpy',
-        "soxbindings;platform_system!='Windows'",
-        'pyloudnorm',
-        'soundfile',
+        # 'sox',
+        # 'jams',
+        # 'numpy',
+        # "soxbindings;platform_system!='Windows'",
+        # 'pyloudnorm',
+        # 'soundfile',
     ],
     extras_require={
         'docs': [
