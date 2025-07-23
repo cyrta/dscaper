@@ -4,17 +4,17 @@ Utility functions
 =================
 '''
 
-from contextlib import contextmanager
-import logging
 import os
 import glob
-from .scaper_exceptions import ScaperError
-import warnings
-from .scaper_warnings import ScaperWarning
 import scipy
-import numpy as np
 import numbers
+import logging
+import warnings
+import numpy as np
 from copy import deepcopy
+from contextlib import contextmanager
+from .scaper_exceptions import ScaperError
+from .scaper_warnings import ScaperWarning
 
 
 @contextmanager

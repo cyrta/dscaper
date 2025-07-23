@@ -2,19 +2,18 @@ try:
     import soxbindings as sox 
 except: # pragma: no cover
     import sox # pragma: no cover
-import json
 import re
-import soundfile
 import os
-import warnings
-import jams
-from collections import namedtuple
-import logging
-import tempfile
-import numpy as np
-import shutil
+import json
 import csv
+import shutil
+import logging
+import warnings
+import tempfile
+import soundfile
+import numpy as np
 from copy import deepcopy
+from collections import namedtuple
 from .scaper_exceptions import ScaperError
 from .scaper_warnings import ScaperWarning
 from .util import _close_temp_files
@@ -165,6 +164,8 @@ def generate_from_jams(jams_infile,
         namespace.
 
     '''
+    import jams
+
     soundscape_jam = jams.load(jams_infile)
     anns = soundscape_jam.search(namespace='scaper')
 
@@ -351,6 +352,8 @@ def trim(audio_infile, jams_infile, audio_outfile, jams_outfile, start_time,
         don't have to point to valid files.
 
     '''
+    import jams
+    
     # First trim jams (might raise an error)
     jam = jams.load(jams_infile)
     jam_sliced = jam.slice(start_time, end_time, strict=False)
@@ -1853,6 +1856,8 @@ class Scaper(object):
         Scaper.generate
 
         '''
+        import jams
+        
         jam = jams.JAMS()
         ann = jams.Annotation(namespace='scaper')
 

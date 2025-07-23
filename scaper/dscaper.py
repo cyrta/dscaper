@@ -1,14 +1,14 @@
-from scaper.dscaper_datatypes import *
-import scaper
-from typing import Annotated, Union
-from fastapi import File,  status
-import uuid
+import io
 import os
 import time
-import soundfile
+import uuid
 import json
+import scaper
 import zipfile
-import io
+import soundfile
+from fastapi import File, status
+from scaper.dscaper_datatypes import *
+from typing import Annotated, Optional, Union
 
 
 DSCAPER_DEFAULT_BASE_PATH = os.path.join(os.getcwd(), "data")
@@ -19,7 +19,7 @@ class Dscaper:
     Dscaper offers an alternavie api to the Scaper library.
     """
 
-    def __init__(self, dscaper_base_path: str | None = None):
+    def __init__(self, dscaper_base_path: Optional[str] = None):
         """
         Initialize the Dscaper with a base path for the libraries and timelines.
         :param dscaper_base_path: The base path for the libraries and timelines. If None, uses the default path.
@@ -301,11 +301,18 @@ class Dscaper:
         os.makedirs(generate_dir, exist_ok=True)
         properties.id = generate_id
         properties.timestamp = int(time.time())
+        
+        fg_path = os.path.join(timeline_path, "foreground")
+        os.makedirs(fg_path, exist_ok=True)
+        
+        bg_path = os.path.join(timeline_path, "background")
+        os.makedirs(bg_path, exist_ok=True)
+
         # Use scaper to generate the timeline
         sc = scaper.Scaper(
             duration=timeline.duration,
-            fg_path=None,  # fg_path is not used in this context
-            bg_path=None,  # bg_path is not used in this context
+            fg_path=fg_path,  # fg_path is not used in this context
+            bg_path=bg_path,  # bg_path is not used in this context
             random_state=properties.seed
         )
         sc.ref_db = properties.ref_db  # Set the reference dB level

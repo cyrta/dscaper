@@ -1,8 +1,7 @@
 # CREATED: 4/23/17 15:37 by Justin Salamon <justin.salamon@nyu.edu>
 
-import numpy as np
-import pyloudnorm
 import soundfile
+import numpy as np
 from .scaper_exceptions import ScaperError
 
 
@@ -43,6 +42,8 @@ def get_integrated_lufs(audio_array, samplerate, min_duration=0.5,
     loudness
         Loudness in terms of LUFS 
     """
+    import pyloudnorm
+    
     duration = audio_array.shape[0] / float(samplerate)
     if duration < min_duration:
         ntiles = int(np.ceil(min_duration / duration))
