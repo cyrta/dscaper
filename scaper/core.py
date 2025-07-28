@@ -1,7 +1,3 @@
-try:
-    import soxbindings as sox 
-except: # pragma: no cover
-    import sox # pragma: no cover
 import re
 import os
 import json
@@ -283,24 +279,25 @@ def generate_from_jams(jams_infile,
     ann.sandbox.scaper.save_isolated_positions = save_isolated_positions
     ann.sandbox.scaper.isolated_positions_path = isolated_positions_path
     
-    # If there are slice (trim) operations, need to perform them!
-    # Need to add this logic for the isolated events too.
-    if 'slice' in ann.sandbox.keys():
-        for sliceop in ann.sandbox['slice']:
-            # must use temp file in order to save to same file
-            tmpfiles = []
-            audio_files = [audio_outfile] + ann.sandbox.scaper.isolated_events_audio_path
-            with _close_temp_files(tmpfiles):
-                for audio_file in audio_files:
-                    # Create tmp file
-                    tmpfiles.append(
-                        tempfile.NamedTemporaryFile(suffix='.wav', delete=False))
-                    # Save trimmed result to temp file
-                    tfm = sox.Transformer()
-                    tfm.trim(sliceop['slice_start'], sliceop['slice_end'])
-                    tfm.build(audio_file, tmpfiles[-1].name)
-                    # Copy result back to original file
-                    shutil.copyfile(tmpfiles[-1].name, audio_file)
+    # TODO: sox-to-pedalboard
+    # # If there are slice (trim) operations, need to perform them!
+    # # Need to add this logic for the isolated events too.
+    # if 'slice' in ann.sandbox.keys():
+    #     for sliceop in ann.sandbox['slice']:
+    #         # must use temp file in order to save to same file
+    #         tmpfiles = []
+    #         audio_files = [audio_outfile] + ann.sandbox.scaper.isolated_events_audio_path
+    #         with _close_temp_files(tmpfiles):
+    #             for audio_file in audio_files:
+    #                 # Create tmp file
+    #                 tmpfiles.append(
+    #                     tempfile.NamedTemporaryFile(suffix='.wav', delete=False))
+    #                 # Save trimmed result to temp file
+    #                 tfm = sox.Transformer()
+    #                 tfm.trim(sliceop['slice_start'], sliceop['slice_end'])
+    #                 tfm.build(audio_file, tmpfiles[-1].name)
+    #                 # Copy result back to original file
+    #                 shutil.copyfile(tmpfiles[-1].name, audio_file)
 
     # Optionally save new jams file
     if jams_outfile is not None:
@@ -384,24 +381,25 @@ def trim(audio_infile, jams_infile, audio_outfile, jams_outfile, start_time,
     # Save result to output jams file
     jam_sliced.save(jams_outfile)
 
-    # Next, trim audio
-    if not no_audio:
-        tfm = sox.Transformer()
-        tfm.trim(start_time, end_time)
-        if audio_outfile != audio_infile:
-            tfm.build(audio_infile, audio_outfile)
-        else:
-            # must use temp file in order to save to same file
-            tmpfiles = []
-            with _close_temp_files(tmpfiles):
-                # Create tmp file
-                tmpfiles.append(
-                    tempfile.NamedTemporaryFile(
-                        suffix='.wav', delete=False))
-                # Save trimmed result to temp file
-                tfm.build(audio_infile, tmpfiles[-1].name)
-                # Copy result back to original file
-                shutil.copyfile(tmpfiles[-1].name, audio_outfile)
+    # TODO: sox-to-pedalboard
+    # # Next, trim audio
+    # if not no_audio:
+    #     tfm = sox.Transformer()
+    #     tfm.trim(start_time, end_time)
+    #     if audio_outfile != audio_infile:
+    #         tfm.build(audio_infile, audio_outfile)
+    #     else:
+    #         # must use temp file in order to save to same file
+    #         tmpfiles = []
+    #         with _close_temp_files(tmpfiles):
+    #             # Create tmp file
+    #             tmpfiles.append(
+    #                 tempfile.NamedTemporaryFile(
+    #                     suffix='.wav', delete=False))
+    #             # Save trimmed result to temp file
+    #             tfm.build(audio_infile, tmpfiles[-1].name)
+    #             # Copy result back to original file
+    #             shutil.copyfile(tmpfiles[-1].name, audio_outfile)
 
 
 def _get_value_from_dist(dist_tuple, random_state):
@@ -2138,21 +2136,22 @@ class Scaper(object):
                     ntiles = int(
                         max(self.duration // source_duration + 1, 1))
 
+                    # TODO: sox-to-pedalboard
                     # Create transformer
-                    tfm = sox.Transformer()
-                    # Ensure consistent sampling rate and channels
-                    # Need both a convert operation (to do the conversion),
-                    # and set_output_format (to have sox interpret the output
-                    # correctly).
-                    tfm.convert(
-                        samplerate=self.sr,
-                        n_channels=self.n_channels,
-                        bitdepth=None
-                    )
-                    tfm.set_output_format(
-                        rate=self.sr,
-                        channels=self.n_channels
-                    )
+                    # tfm = sox.Transformer()
+                    # # Ensure consistent sampling rate and channels
+                    # # Need both a convert operation (to do the conversion),
+                    # # and set_output_format (to have sox interpret the output
+                    # # correctly).
+                    # tfm.convert(
+                    #     samplerate=self.sr,
+                    #     n_channels=self.n_channels,
+                    #     bitdepth=None
+                    # )
+                    # tfm.set_output_format(
+                    #     rate=self.sr,
+                    #     channels=self.n_channels
+                    # )
 
                     # PROCESS BEFORE COMPUTING LUFS
                     tmpfiles_internal = []
@@ -2172,10 +2171,11 @@ class Scaper(object):
                         # tile the background along the appropriate dimensions
                         event_audio = np.tile(event_audio, (ntiles, 1))
                         event_audio = event_audio[:stop]
-                        event_audio = tfm.build_array(
-                            input_array=event_audio,
-                            sample_rate_in=event_sr
-                        )
+                        # TODO: sox-to-pedalboard
+                        # event_audio = tfm.build_array(
+                        #     input_array=event_audio,
+                        #     sample_rate_in=event_sr
+                        # )
                         event_audio = event_audio.reshape(-1, self.n_channels)
                         # NOW compute LUFS
                         bg_lufs = get_integrated_lufs(event_audio, self.sr)
@@ -2187,30 +2187,33 @@ class Scaper(object):
                         event_audio_list.append(event_audio[:duration_in_samples])
 
                 elif e.value['role'] == 'foreground':
-                    # Create transformer
-                    tfm = sox.Transformer()
-                    # Ensure consistent sampling rate and channels
-                    # Need both a convert operation (to do the conversion),
-                    # and set_output_format (to have sox interpret the output
-                    # correctly).
-                    tfm.convert(
-                        samplerate=self.sr,
-                        n_channels=self.n_channels,
-                        bitdepth=None
-                    )
-                    tfm.set_output_format(
-                        rate=self.sr,
-                        channels=self.n_channels
-                    )
+                    # TODO: sox-to-pedalboard
+                    # # Create transformer
+                    # tfm = sox.Transformer()
+                    # # Ensure consistent sampling rate and channels
+                    # # Need both a convert operation (to do the conversion),
+                    # # and set_output_format (to have sox interpret the output
+                    # # correctly).
+                    # tfm.convert(
+                    #     samplerate=self.sr,
+                    #     n_channels=self.n_channels,
+                    #     bitdepth=None
+                    # )
+                    # tfm.set_output_format(
+                    #     rate=self.sr,
+                    #     channels=self.n_channels
+                    # )
 
-                    # Pitch shift
-                    if e.value['pitch_shift'] is not None:
-                        tfm.pitch(e.value['pitch_shift'], quick=quick_pitch_time)
+                    # # TODO: sox-to-pedalboard
+                    # # Pitch shift
+                    # if e.value['pitch_shift'] is not None:
+                    #     tfm.pitch(e.value['pitch_shift'], quick=quick_pitch_time)
 
-                    # Time stretch
-                    if e.value['time_stretch'] is not None:
-                        factor = 1.0 / float(e.value['time_stretch'])
-                        tfm.tempo(factor, audio_type='s', quick=quick_pitch_time)
+                    # # TODO: sox-to-pedalboard
+                    # # Time stretch
+                    # if e.value['time_stretch'] is not None:
+                    #     factor = 1.0 / float(e.value['time_stretch'])
+                    #     tfm.tempo(factor, audio_type='s', quick=quick_pitch_time)
 
                     # PROCESS BEFORE COMPUTING LUFS
                     tmpfiles_internal = []
@@ -2228,10 +2231,11 @@ class Scaper(object):
                         event_audio, event_sr = soundfile.read(
                             e.value['source_file'], always_2d=True,
                             start=start, stop=stop)
-                        event_audio = tfm.build_array(
-                            input_array=event_audio,
-                            sample_rate_in=event_sr
-                        )
+                        # # TODO: sox-to-pedalboard
+                        # event_audio = tfm.build_array(
+                        #     input_array=event_audio,
+                        #     sample_rate_in=event_sr
+                        # )
                         event_audio = event_audio.reshape(-1, self.n_channels)
                         
                         # NOW compute LUFS
@@ -2316,13 +2320,14 @@ class Scaper(object):
                 # NOTE: must apply AFTER peak normalization: applying reverb
                 # to a clipping signal with sox and then normalizing doesn't
                 # work as one would hope.
-                if reverb is not None:
-                    tfm = sox.Transformer()
-                    tfm.reverb(reverberance=reverb * 100)
-                    soundscape_audio = tfm.build_array(
-                        input_array=soundscape_audio,
-                        sample_rate_in=self.sr,
-                    )
+                # TODO: sox-to-pedalboard
+                # if reverb is not None:
+                #     tfm = sox.Transformer()
+                #     tfm.reverb(reverberance=reverb * 100)
+                #     soundscape_audio = tfm.build_array(
+                #         input_array=soundscape_audio,
+                #         sample_rate_in=self.sr,
+                #     )
 
                 # Reshape to ensure data are 2d
                 soundscape_audio = soundscape_audio.reshape(-1, self.n_channels)

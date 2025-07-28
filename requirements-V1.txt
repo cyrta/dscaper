@@ -76,7 +76,6 @@ six
 sniffio
 sortedcontainers
 soundfile
-sox
 stack-data
 starlette
 tornado
