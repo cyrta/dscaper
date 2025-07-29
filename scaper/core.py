@@ -6,7 +6,10 @@ import shutil
 import logging
 import warnings
 import tempfile
+import pedalboard
 import soundfile
+from pedalboard.io import AudioFile
+from pedalboard import Pedalboard, PitchShift, Reverb, Gain
 import numpy as np
 from copy import deepcopy
 from collections import namedtuple
@@ -280,24 +283,36 @@ def generate_from_jams(jams_infile,
     ann.sandbox.scaper.isolated_positions_path = isolated_positions_path
     
     # TODO: sox-to-pedalboard
-    # # If there are slice (trim) operations, need to perform them!
-    # # Need to add this logic for the isolated events too.
-    # if 'slice' in ann.sandbox.keys():
-    #     for sliceop in ann.sandbox['slice']:
-    #         # must use temp file in order to save to same file
-    #         tmpfiles = []
-    #         audio_files = [audio_outfile] + ann.sandbox.scaper.isolated_events_audio_path
-    #         with _close_temp_files(tmpfiles):
-    #             for audio_file in audio_files:
-    #                 # Create tmp file
-    #                 tmpfiles.append(
-    #                     tempfile.NamedTemporaryFile(suffix='.wav', delete=False))
-    #                 # Save trimmed result to temp file
-    #                 tfm = sox.Transformer()
-    #                 tfm.trim(sliceop['slice_start'], sliceop['slice_end'])
-    #                 tfm.build(audio_file, tmpfiles[-1].name)
-    #                 # Copy result back to original file
-    #                 shutil.copyfile(tmpfiles[-1].name, audio_file)
+    # If there are slice (trim) operations, need to perform them!
+    # Need to add this logic for the isolated events too.
+    if 'slice' in ann.sandbox.keys():
+        for sliceop in ann.sandbox['slice']:
+            # must use temp file in order to save to same file
+            tmpfiles = []
+            audio_files = [audio_outfile] + ann.sandbox.scaper.isolated_events_audio_path
+            with _close_temp_files(tmpfiles):
+                for audio_file in audio_files:
+                    print("***** Trimming audio file: {:s} to [{:.2f}, {:.2f}]".format(
+                        audio_file, sliceop['slice_start'], sliceop['slice_end']))
+                    # Read audio file and trim
+                    with AudioFile(str(audio_file)) as f_read:
+                        # skip to start
+                        f_read.seek(int(f_read.samplerate * sliceop['slice_start']))
+                        # Read from start to end
+                        duration = sliceop['slice_end'] - sliceop['slice_start']
+                        start_to_end = f_read.read(int(f_read.samplerate * duration))
+                    # Write to output file
+                    with AudioFile(str(audio_file), 'w', f_read.samplerate, f_read.num_channels) as f_write:
+                        f_write.write(start_to_end)
+                    # # Create tmp file
+                    # tmpfiles.append(
+                    #     tempfile.NamedTemporaryFile(suffix='.wav', delete=False))
+                    # # Save trimmed result to temp file
+                    # tfm = sox.Transformer()
+                    # tfm.trim(sliceop['slice_start'], sliceop['slice_end'])
+                    # tfm.build(audio_file, tmpfiles[-1].name)
+                    # # Copy result back to original file
+                    # shutil.copyfile(tmpfiles[-1].name, audio_file)
 
     # Optionally save new jams file
     if jams_outfile is not None:
@@ -382,8 +397,19 @@ def trim(audio_infile, jams_infile, audio_outfile, jams_outfile, start_time,
     jam_sliced.save(jams_outfile)
 
     # TODO: sox-to-pedalboard
-    # # Next, trim audio
-    # if not no_audio:
+    # Next, trim audio
+    if not no_audio:
+        print("***** Trimming audio file: {:s} to [{:.2f}, {:.2f}]".format(
+            audio_infile, start_time, end_time))
+        with AudioFile(str(audio_infile), 'r') as f_read:
+            f_read.seek(int(f_read.samplerate * start_time))
+            duration = end_time - start_time
+            start_to_end = f_read.read(int(f_read.samplerate * duration))
+        # Write to output file
+        with AudioFile(str(audio_outfile), 'w', f_read.samplerate, f_read.num_channels) as f_write:
+            f_write.write(start_to_end)
+            print("***** Trimmed audio file saved to: {:s}".format(audio_outfile))
+
     #     tfm = sox.Transformer()
     #     tfm.trim(start_time, end_time)
     #     if audio_outfile != audio_infile:
@@ -2131,60 +2157,95 @@ class Scaper(object):
 
             for i, e in enumerate(ann.data):
                 if e.value['role'] == 'background':
-                    # Concatenate background if necessary.
-                    source_duration = soundfile.info(e.value['source_file']).duration
-                    ntiles = int(
-                        max(self.duration // source_duration + 1, 1))
+                    print("Reading background audio from: ", e.value['source_file'])
+                    print("target samplerate: ", self.sr)
+                    # with AudioFile(e.value['source_file']).resampled_to(self.sr) as af:
+                    with AudioFile(e.value['source_file']).resampled_to(self.sr) as af:
+                        print("actual samplerate: ", af.samplerate)
+                        # read the relevant part of the background audio
+                        start_sample = int(e.value['source_time'] * af.samplerate)
+                        used_samples = int(e.value['event_duration'] * af.samplerate)
+                        af.seek(start_sample)
+                        audio_in = af.read(used_samples)
+                        print("Background audio shape: ", audio_in.shape)
+                        current_duration_in_samples = audio_in.shape[1]
+                        # loop background if it is shorter than the soundscape duration
+                        if current_duration_in_samples < duration_in_samples:
+                            # TODO: cross-fade (using AudioSegment from pydub)
+                            ntiles = int(max(duration_in_samples // current_duration_in_samples + 1, 1))
+                            print("Tiling background audio {} times to match soundscape duration".format(ntiles))
+                            audio_in = np.tile(audio_in, (ntiles, 1))
+                            print("Tiled background audio shape: ", audio_in.shape)
+                            audio_in = audio_in[:duration_in_samples]
+                            print("Tiled background audio shape after slicing: ", audio_in.shape)
 
-                    # TODO: sox-to-pedalboard
-                    # Create transformer
-                    # tfm = sox.Transformer()
-                    # # Ensure consistent sampling rate and channels
-                    # # Need both a convert operation (to do the conversion),
-                    # # and set_output_format (to have sox interpret the output
-                    # # correctly).
-                    # tfm.convert(
-                    #     samplerate=self.sr,
-                    #     n_channels=self.n_channels,
-                    #     bitdepth=None
-                    # )
-                    # tfm.set_output_format(
-                    #     rate=self.sr,
-                    #     channels=self.n_channels
-                    # )
+                        audio_in = audio_in.reshape(-1, self.n_channels)
+                        print("Tiled background audio shape after reshaping: ", audio_in.shape)
 
-                    # PROCESS BEFORE COMPUTING LUFS
-                    tmpfiles_internal = []
-                    with _close_temp_files(tmpfiles_internal):
-                        # create internal tmpfile
-                        tmpfiles_internal.append(
-                            tempfile.NamedTemporaryFile(
-                                suffix='.wav', delete=False))
-                        # read in background off disk, using start and stop 
-                        # to only read the necessary audio
-                        event_sr = soundfile.info(e.value['source_file']).samplerate
-                        start = int(e.value['source_time'] * event_sr)
-                        stop = int((e.value['source_time'] + e.value['event_duration']) * event_sr)
-                        event_audio, event_sr = soundfile.read(
-                            e.value['source_file'], always_2d=True,
-                            start=start, stop=stop)
-                        # tile the background along the appropriate dimensions
-                        event_audio = np.tile(event_audio, (ntiles, 1))
-                        event_audio = event_audio[:stop]
-                        # TODO: sox-to-pedalboard
-                        # event_audio = tfm.build_array(
-                        #     input_array=event_audio,
-                        #     sample_rate_in=event_sr
-                        # )
-                        event_audio = event_audio.reshape(-1, self.n_channels)
-                        # NOW compute LUFS
-                        bg_lufs = get_integrated_lufs(event_audio, self.sr)
-
-                        # Normalize background to reference DB.
+                        # Adjust background audio to match the reference dB level.
+                        print("shape of background audio after reading: ", audio_in.shape )
+                        bg_lufs = get_integrated_lufs(audio_in, self.sr)
                         gain = self.ref_db - bg_lufs
-                        event_audio = np.exp(gain * np.log(10) / 20) * event_audio
+                        event_audio = np.exp(gain * np.log(10) / 20) * audio_in
 
                         event_audio_list.append(event_audio[:duration_in_samples])
+
+                    # # Old version
+                    
+                    # # Concatenate background if necessary.
+                    # source_duration = soundfile.info(e.value['source_file']).duration
+                    # ntiles = int(
+                    #     max(self.duration // source_duration + 1, 1))
+
+                    # # TODO: sox-to-pedalboard
+                    # # Create transformer
+                    # # tfm = sox.Transformer()
+                    # # # Ensure consistent sampling rate and channels
+                    # # # Need both a convert operation (to do the conversion),
+                    # # # and set_output_format (to have sox interpret the output
+                    # # # correctly).
+                    # # tfm.convert(
+                    # #     samplerate=self.sr,
+                    # #     n_channels=self.n_channels,
+                    # #     bitdepth=None
+                    # # )
+                    # # tfm.set_output_format(
+                    # #     rate=self.sr,
+                    # #     channels=self.n_channels
+                    # # )
+
+                    # # PROCESS BEFORE COMPUTING LUFS
+                    # tmpfiles_internal = []
+                    # with _close_temp_files(tmpfiles_internal):
+                    #     # create internal tmpfile
+                    #     tmpfiles_internal.append(
+                    #         tempfile.NamedTemporaryFile(
+                    #             suffix='.wav', delete=False))
+                    #     # read in background off disk, using start and stop 
+                    #     # to only read the necessary audio
+                    #     event_sr = soundfile.info(e.value['source_file']).samplerate
+                    #     start = int(e.value['source_time'] * event_sr)
+                    #     stop = int((e.value['source_time'] + e.value['event_duration']) * event_sr)
+                    #     event_audio, event_sr = soundfile.read(
+                    #         e.value['source_file'], always_2d=True,
+                    #         start=start, stop=stop)
+                    #     # tile the background along the appropriate dimensions
+                    #     event_audio = np.tile(event_audio, (ntiles, 1))
+                    #     event_audio = event_audio[:stop]
+                    #     # TODO: sox-to-pedalboard
+                    #     # event_audio = tfm.build_array(
+                    #     #     input_array=event_audio,
+                    #     #     sample_rate_in=event_sr
+                    #     # )
+                    #     event_audio = event_audio.reshape(-1, self.n_channels)
+                    #     # NOW compute LUFS
+                    #     bg_lufs = get_integrated_lufs(event_audio, self.sr)
+
+                    #     # Normalize background to reference DB.
+                    #     gain = self.ref_db - bg_lufs
+                    #     event_audio = np.exp(gain * np.log(10) / 20) * event_audio
+
+                    #     event_audio_list.append(event_audio[:duration_in_samples])
 
                 elif e.value['role'] == 'foreground':
                     # TODO: sox-to-pedalboard
@@ -2215,29 +2276,31 @@ class Scaper(object):
                     #     factor = 1.0 / float(e.value['time_stretch'])
                     #     tfm.tempo(factor, audio_type='s', quick=quick_pitch_time)
 
-                    # PROCESS BEFORE COMPUTING LUFS
-                    tmpfiles_internal = []
-                    with _close_temp_files(tmpfiles_internal):
-                        # create internal tmpfile
-                        tmpfiles_internal.append(
-                            tempfile.NamedTemporaryFile(
-                                suffix='.wav', delete=False))
+
+                    print("Reading foreground audio from: ", e.value['source_file'])
+                    print("target samplerate: ", self.sr)
+                    with AudioFile(e.value['source_file']).resampled_to(self.sr) as af:
+                        print("actual samplerate: ", af.samplerate)
+                         # read the relevant part of the event audio
+                        start_sample = int(e.value['source_time'] * af.samplerate)
+                        used_samples = int(e.value['event_duration'] * af.samplerate)
+                        af.seek(start_sample)
+                        audio_in = af.read(used_samples)
+                        event_audio = audio_in.reshape(-1, self.n_channels)
                         
-                        # synthesize edited foreground sound event, 
-                        # doing the trim via soundfile
-                        event_sr = soundfile.info(e.value['source_file']).samplerate
-                        start = int(e.value['source_time'] * event_sr)
-                        stop = int((e.value['source_time'] + e.value['event_duration']) * event_sr)
-                        event_audio, event_sr = soundfile.read(
-                            e.value['source_file'], always_2d=True,
-                            start=start, stop=stop)
-                        # # TODO: sox-to-pedalboard
-                        # event_audio = tfm.build_array(
-                        #     input_array=event_audio,
-                        #     sample_rate_in=event_sr
-                        # )
-                        event_audio = event_audio.reshape(-1, self.n_channels)
-                        
+                        # Pitch shift
+                        if e.value['pitch_shift'] is not None:
+                            board = Pedalboard([PitchShift(e.value['pitch_shift'])])
+                            event_audio = board(event_audio, self.sr)
+
+                        # Time stretch
+                        if e.value['time_stretch'] is not None:
+                            event_audio = pedalboard.time_stretch(
+                                event_audio,
+                                self.sr,
+                                e.value['time_stretch'] 
+                            )
+
                         # NOW compute LUFS
                         fg_lufs = get_integrated_lufs(event_audio, self.sr)
 
@@ -2267,6 +2330,61 @@ class Scaper(object):
                         event_audio = event_audio[:duration_in_samples]
 
                         event_audio_list.append(event_audio[:duration_in_samples])
+                    
+                    # # # Old version
+
+                    # # PROCESS BEFORE COMPUTING LUFS
+                    # tmpfiles_internal = []
+                    # with _close_temp_files(tmpfiles_internal):
+                    #     # create internal tmpfile
+                    #     tmpfiles_internal.append(
+                    #         tempfile.NamedTemporaryFile(
+                    #             suffix='.wav', delete=False))
+                        
+                    #     # synthesize edited foreground sound event, 
+                    #     # doing the trim via soundfile
+                    #     event_sr = soundfile.info(e.value['source_file']).samplerate
+                    #     start = int(e.value['source_time'] * event_sr)
+                    #     stop = int((e.value['source_time'] + e.value['event_duration']) * event_sr)
+                    #     event_audio, event_sr = soundfile.read(
+                    #         e.value['source_file'], always_2d=True,
+                    #         start=start, stop=stop)
+                    #     # # TODO: sox-to-pedalboard
+                    #     # event_audio = tfm.build_array(
+                    #     #     input_array=event_audio,
+                    #     #     sample_rate_in=event_sr
+                    #     # )
+                    #     event_audio = event_audio.reshape(-1, self.n_channels)
+                        
+                    #     # NOW compute LUFS
+                    #     fg_lufs = get_integrated_lufs(event_audio, self.sr)
+
+                    #     # Normalize to specified SNR with respect to
+                    #     # background
+                    #     gain = self.ref_db + e.value['snr'] - fg_lufs
+                    #     event_audio = np.exp(gain * np.log(10) / 20) * event_audio
+
+                    #     # Apply short fade in and out
+                    #     # (avoid unnatural sound onsets/offsets)
+                    #     if self.fade_in_len > 0:
+                    #         fade_in_samples =  int(self.fade_in_len * self.sr)
+                    #         fade_in_window = np.sin(np.linspace(0, np.pi / 2, fade_in_samples))[..., None]
+                    #         event_audio[:fade_in_samples] *= fade_in_window
+
+                    #     if self.fade_out_len > 0:
+                    #         fade_out_samples = int(self.fade_out_len * self.sr)
+                    #         fade_out_window = np.sin(np.linspace(np.pi / 2, 0, fade_out_samples))[..., None]
+                    #         event_audio[-fade_out_samples:] *= fade_out_window
+
+                    #     # Pad with silence before/after event to match the
+                    #     # soundscape duration
+                    #     prepad = int(self.sr * e.value['event_time'])
+                    #     postpad = max(0, duration_in_samples - (event_audio.shape[0] + prepad))
+                    #     event_audio = np.pad(event_audio, ((prepad, postpad), (0, 0)), 
+                    #         mode='constant', constant_values=(0, 0))
+                    #     event_audio = event_audio[:duration_in_samples]
+
+                    #     event_audio_list.append(event_audio[:duration_in_samples])
                 else:
                     raise ScaperError(
                         'Unsupported event role: {:s}'.format(
