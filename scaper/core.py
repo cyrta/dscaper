@@ -288,22 +288,26 @@ def generate_from_jams(jams_infile,
     if 'slice' in ann.sandbox.keys():
         for sliceop in ann.sandbox['slice']:
             # must use temp file in order to save to same file
-            tmpfiles = []
+            # tmpfiles = []
             audio_files = [audio_outfile] + ann.sandbox.scaper.isolated_events_audio_path
-            with _close_temp_files(tmpfiles):
-                for audio_file in audio_files:
-                    print("***** Trimming audio file: {:s} to [{:.2f}, {:.2f}]".format(
-                        audio_file, sliceop['slice_start'], sliceop['slice_end']))
-                    # Read audio file and trim
-                    with AudioFile(str(audio_file)) as f_read:
-                        # skip to start
-                        f_read.seek(int(f_read.samplerate * sliceop['slice_start']))
-                        # Read from start to end
-                        duration = sliceop['slice_end'] - sliceop['slice_start']
-                        start_to_end = f_read.read(int(f_read.samplerate * duration))
-                    # Write to output file
-                    with AudioFile(str(audio_file), 'w', f_read.samplerate, f_read.num_channels) as f_write:
-                        f_write.write(start_to_end)
+            # with _close_temp_files(tmpfiles):
+            for audio_file in audio_files:
+                print("***** Trimming audio file in gen from jams: {:s} to [{:.2f}, {:.2f}]".format(
+                    audio_file, sliceop['slice_start'], sliceop['slice_end']))
+                # Read audio file and trim
+                with AudioFile(audio_file) as f_read:
+                    # skip to start
+                    f_read.seek(int(f_read.samplerate * sliceop['slice_start']))
+                    # Read from start to end
+                    duration = sliceop['slice_end'] - sliceop['slice_start']
+                    start_to_end = f_read.read(int(f_read.samplerate * duration))
+                # Write to output file
+                # print("shape of trimmed audio: ", start_to_end.shape)
+                start_to_end = start_to_end.reshape(-1, 1)
+                # print("shape of trimmed audio after reshaping: ", start_to_end.shape)
+                soundfile.write(audio_file, start_to_end, f_read.samplerate, subtype='PCM_32')
+                # with AudioFile(audio_file, 'w', f_read.samplerate, f_read.num_channels) as f_write:
+                #     f_write.write(start_to_end)
                     # # Create tmp file
                     # tmpfiles.append(
                     #     tempfile.NamedTemporaryFile(suffix='.wav', delete=False))
@@ -406,9 +410,18 @@ def trim(audio_infile, jams_infile, audio_outfile, jams_outfile, start_time,
             duration = end_time - start_time
             start_to_end = f_read.read(int(f_read.samplerate * duration))
         # Write to output file
-        with AudioFile(str(audio_outfile), 'w', f_read.samplerate, f_read.num_channels) as f_write:
-            f_write.write(start_to_end)
-            print("***** Trimmed audio file saved to: {:s}".format(audio_outfile))
+        # print("***** Trimmed audio file saved to: {:s}".format(audio_outfile))
+        # print("***** Audio sample rate: ", f_read.samplerate)
+        # print("shape of trimmed audio: ", start_to_end.shape)
+        start_to_end = start_to_end.reshape(-1, 1)
+        # print("shape of trimmed audio after reshaping: ", start_to_end.shape)
+        soundfile.write(str(audio_outfile), start_to_end, f_read.samplerate, subtype='PCM_32')
+        
+
+        
+        # with AudioFile(str(audio_outfile), 'w', f_read.samplerate, f_read.num_channels) as f_write:
+        #     f_write.write(start_to_end)
+        #     print("***** Trimmed audio file saved to: {:s}".format(audio_outfile))
 
     #     tfm = sox.Transformer()
     #     tfm.trim(start_time, end_time)
@@ -2157,33 +2170,33 @@ class Scaper(object):
 
             for i, e in enumerate(ann.data):
                 if e.value['role'] == 'background':
-                    print("Reading background audio from: ", e.value['source_file'])
-                    print("target samplerate: ", self.sr)
+                    # print("Reading background audio from: ", e.value['source_file'])
+                    # print("target samplerate: ", self.sr)
                     # with AudioFile(e.value['source_file']).resampled_to(self.sr) as af:
                     with AudioFile(e.value['source_file']).resampled_to(self.sr) as af:
-                        print("actual samplerate: ", af.samplerate)
+                        # print("actual samplerate: ", af.samplerate)
                         # read the relevant part of the background audio
                         start_sample = int(e.value['source_time'] * af.samplerate)
                         used_samples = int(e.value['event_duration'] * af.samplerate)
                         af.seek(start_sample)
                         audio_in = af.read(used_samples)
-                        print("Background audio shape: ", audio_in.shape)
+                        # print("Background audio shape: ", audio_in.shape)
                         current_duration_in_samples = audio_in.shape[1]
                         # loop background if it is shorter than the soundscape duration
                         if current_duration_in_samples < duration_in_samples:
                             # TODO: cross-fade (using AudioSegment from pydub)
                             ntiles = int(max(duration_in_samples // current_duration_in_samples + 1, 1))
-                            print("Tiling background audio {} times to match soundscape duration".format(ntiles))
+                            # print("Tiling background audio {} times to match soundscape duration".format(ntiles))
                             audio_in = np.tile(audio_in, (ntiles, 1))
-                            print("Tiled background audio shape: ", audio_in.shape)
+                            # print("Tiled background audio shape: ", audio_in.shape)
                             audio_in = audio_in[:duration_in_samples]
-                            print("Tiled background audio shape after slicing: ", audio_in.shape)
+                            # print("Tiled background audio shape after slicing: ", audio_in.shape)
 
                         audio_in = audio_in.reshape(-1, self.n_channels)
-                        print("Tiled background audio shape after reshaping: ", audio_in.shape)
+                        # print("Tiled background audio shape after reshaping: ", audio_in.shape)
 
                         # Adjust background audio to match the reference dB level.
-                        print("shape of background audio after reading: ", audio_in.shape )
+                        # print("shape of background audio after reading: ", audio_in.shape )
                         bg_lufs = get_integrated_lufs(audio_in, self.sr)
                         gain = self.ref_db - bg_lufs
                         event_audio = np.exp(gain * np.log(10) / 20) * audio_in
@@ -2277,21 +2290,31 @@ class Scaper(object):
                     #     tfm.tempo(factor, audio_type='s', quick=quick_pitch_time)
 
 
-                    print("Reading foreground audio from: ", e.value['source_file'])
-                    print("target samplerate: ", self.sr)
+                    # print("Reading foreground audio from: ", e.value['source_file'])
+                    # print("target samplerate: ", self.sr)
                     with AudioFile(e.value['source_file']).resampled_to(self.sr) as af:
-                        print("actual samplerate: ", af.samplerate)
+                        # print("actual samplerate: ", af.samplerate)
                          # read the relevant part of the event audio
                         start_sample = int(e.value['source_time'] * af.samplerate)
                         used_samples = int(e.value['event_duration'] * af.samplerate)
                         af.seek(start_sample)
                         audio_in = af.read(used_samples)
+                        # print("Foreground audio shape: ", audio_in.shape)
+                        # use first channel if stereo
+                        if audio_in.shape[0] > 1:
+                            audio_in = audio_in[0, :]
+                            # print("Using first channel of stereo audio: ", audio_in.shape)
+                        # print("Foreground audio shape after channel selection: ", audio_in.shape)
                         event_audio = audio_in.reshape(-1, self.n_channels)
+                        # print("Foreground audio shape after reshaping: ", event_audio.shape)
                         
-                        # Pitch shift
+                        # # Pitch shift
                         if e.value['pitch_shift'] is not None:
                             board = Pedalboard([PitchShift(e.value['pitch_shift'])])
                             event_audio = board(event_audio, self.sr)
+                            # event_audio = effected
+                            # soundfile.write('/home/grud/jsalt25/dscaper-1/tests/tmp/after_pitch_shift.wav',event_audio, self.sr)
+                            # print("shape of foreground audio after pitch shift: ", event_audio.shape)
 
                         # Time stretch
                         if e.value['time_stretch'] is not None:
@@ -2330,7 +2353,7 @@ class Scaper(object):
                         event_audio = event_audio[:duration_in_samples]
 
                         event_audio_list.append(event_audio[:duration_in_samples])
-                    
+
                     # # # Old version
 
                     # # PROCESS BEFORE COMPUTING LUFS
@@ -2447,6 +2470,11 @@ class Scaper(object):
                 #         sample_rate_in=self.sr,
                 #     )
 
+                # Optionally apply reverb
+                if reverb is not None:
+                    board = Pedalboard([Reverb(reverb)])
+                    soundscape_audio = board(soundscape_audio, self.sr)
+
                 # Reshape to ensure data are 2d
                 soundscape_audio = soundscape_audio.reshape(-1, self.n_channels)
 
@@ -2455,6 +2483,9 @@ class Scaper(object):
                     soundfile.write(audio_path, soundscape_audio, self.sr,
                                     subtype='PCM_32')
 
+                # soundfile.write('/home/grud/jsalt25/dscaper-1/tests/tmp/fj_soundscape_audio2.wav', soundscape_audio, self.sr)
+
+                
                 # Optionally save isolated events to disk
                 if save_isolated_events:
                     base, ext = os.path.splitext(audio_path)

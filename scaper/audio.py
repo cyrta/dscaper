@@ -45,8 +45,12 @@ def get_integrated_lufs(audio_array, samplerate, min_duration=0.5,
     import pyloudnorm
     
     duration = audio_array.shape[0] / float(samplerate)
+    # print(f"Duration of audio: {duration:.3f} seconds")
     if duration < min_duration:
         ntiles = int(np.ceil(min_duration / duration))
+        print(f"Audio is shorter than {min_duration} seconds, "
+              f"self-concatenating {ntiles} times to reach "
+              f"minimum duration of {min_duration} seconds.")
         audio_array = np.tile(audio_array, (ntiles, 1))
     meter = pyloudnorm.Meter(
         samplerate, filter_class=filter_class, block_size=block_size

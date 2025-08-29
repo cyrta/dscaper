@@ -234,6 +234,12 @@ def test_generate_from_jams(atol=1e-5, rtol=1e-8):
 
         # validate return API
         orig_wav, sr = soundfile.read(TEST_PATHS[44100]['REG'].wav, always_2d=True)
+        print(f"Comparing {TEST_PATHS[44100]['REG'].wav} with generated soundscape audio")
+        # save fj_soundscape_audio audio to /home/grud/jsalt25/dscaper-1/tests/tmp
+        soundfile.write('/home/grud/jsalt25/dscaper-1/tests/tmp/fj_soundscape_audio_reg.wav', fj_soundscape_audio, sr, subtype='PCM_32')
+        print(f"Generated soundscape audio saved to /home/grud/jsalt25/dscaper-1/tests/tmp/fj_soundscape_audio_reg.wav")
+        # assert np.allclose(orig_wav, fj_soundscape_audio, atol=atol, rtol=rtol)
+        print("shapes: ", orig_wav.shape, fj_soundscape_audio.shape)
         assert np.allclose(orig_wav, fj_soundscape_audio)
 
         regjam = jams.load(TEST_PATHS[44100]['REG'].jams)
@@ -580,6 +586,7 @@ def test_generate_from_jams(atol=1e-5, rtol=1e-8):
                                           save_isolated_events=True, 
                                           isolated_events_path=gen_events_path)
 
+                print(f"Validating soundscape and event audio for {orig_wav_file.name} and {gen_wav_file.name}")
                 _validate_soundscape_and_event_audio(orig_wav_file, gen_wav_file, 
                     gen_events_path, orig_events_path)
 
