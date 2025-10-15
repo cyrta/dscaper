@@ -39,7 +39,7 @@ for _ in range(2):
                  snr=('normal', 10, 3),
                  pitch_shift=None,
                  time_stretch=None,
-                 event_type='human')
+                 position='human')
 audiofile = 'soundscape.wav'
 jamsfile = 'soundscape.jams'
 txtfile = 'soundscape.txt'
