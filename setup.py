@@ -41,7 +41,6 @@ setup(
         # 'sox',
         # 'jams',
         # 'numpy',
-        # "soxbindings;platform_system!='Windows'",
         # 'pyloudnorm',
         # 'soundfile',
     ],

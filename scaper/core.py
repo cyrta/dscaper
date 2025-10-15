@@ -1,7 +1,4 @@
-try:
-    import soxbindings as sox 
-except: # pragma: no cover
-    import sox # pragma: no cover
+import sox # pragma: no cover
 import re
 import os
 import json
